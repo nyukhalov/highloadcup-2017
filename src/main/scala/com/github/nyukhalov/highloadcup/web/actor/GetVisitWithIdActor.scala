@@ -9,7 +9,7 @@ class GetVisitWithIdActor extends Actor with AppLogger {
 
   override def receive: Receive = {
     case GetVisitWithId(id) =>
-      val visit = Visit(1, 10, 1, 123, 4)
+      val visit = Visit(id, 10, 1, 123, 4)
       sender() ! VisitWithId(visit)
   }
 }

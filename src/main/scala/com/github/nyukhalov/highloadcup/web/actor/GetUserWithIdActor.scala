@@ -7,7 +7,7 @@ import com.github.nyukhalov.highloadcup.web.domain.{GetUserWithId, UserWithId}
 class GetUserWithIdActor extends Actor {
   override def receive: Receive = {
     case GetUserWithId(id) =>
-      val user = User(1, "email@dd.d", "Roman", "Niukhalov", "m", 123)
+      val user = User(id, "email@dd.d", "Roman", "Niukhalov", "m", 123)
       sender() ! UserWithId(user)
   }
 }

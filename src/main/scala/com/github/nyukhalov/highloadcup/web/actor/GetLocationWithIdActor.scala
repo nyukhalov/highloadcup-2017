@@ -7,7 +7,7 @@ import com.github.nyukhalov.highloadcup.web.domain.{GetLocationWithId, LocationW
 class GetLocationWithIdActor extends Actor {
   override def receive: Receive = {
     case GetLocationWithId(id) =>
-      val location = Location(1, "asd", "cs", "city", 100)
+      val location = Location(id, "asd", "cs", "city", 100)
       sender() ! LocationWithId(location)
   }
 }

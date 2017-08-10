@@ -16,28 +16,28 @@ class WebServer(implicit actorSystem: ActorSystem, mat: Materializer, ec: Execut
   extends PerRequestCreator with JsonSupport {
 
   val getUserRoute =
-    path("users") {
-      get {
+    path("users" / IntNumber) {
+      id => get {
         getUserWithId {
-          1
+          id
         }
       }
     }
 
   val getVisitRoute =
-    path("visits") {
-      get {
+    path("visits" / IntNumber) {
+      id => get {
         getVisitWithId {
-          1
+          id
         }
       }
     }
 
   val getLocationRoute =
-    path("locations") {
-      get {
+    path("locations" / IntNumber) {
+      id => get {
         getLocationWithId {
-          1
+          id
         }
       }
     }

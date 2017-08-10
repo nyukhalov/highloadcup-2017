@@ -1,7 +1,7 @@
 package com.github.nyukhalov.highloadcup.web.json
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import com.github.nyukhalov.highloadcup.core.domain.User
+import com.github.nyukhalov.highloadcup.core.domain.{User, Visit}
 import spray.json.{DefaultJsonProtocol, JsValue, JsonWriter, RootJsonFormat}
 import com.github.nyukhalov.highloadcup.web.domain._
 
@@ -13,6 +13,7 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   private val REPLACEMENT = "$1_$2"
 
   implicit val userFormat = jsonFormat6(User)
+  implicit val visitFormat = jsonFormat5(Visit)
 
   // model
   implicit val errorFormat = jsonFormat1(Error)
@@ -23,10 +24,14 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
     override def read(json: JsValue): UserWithId = {
       throw new RuntimeException("Not implemented")
     }
-
     override def write(obj: UserWithId): JsValue = userFormat.write(obj.user)
   }
-
+  implicit object VisitWithIdFormat extends RootJsonFormat[VisitWithId] {
+    override def read(json: JsValue): VisitWithId = {
+      throw new RuntimeException("Not implemented")
+    }
+    override def write(obj: VisitWithId): JsValue = visitFormat.write(obj.visit)
+  }
 //  implicit object RestMessageFormat extends RootJsonFormat[RestMessage] {
 //    implicit def go[T <: RestMessage](rm: T)(implicit jw: JsonWriter[T]): JsValue = {
 //      jw.write(rm)

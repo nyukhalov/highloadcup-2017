@@ -26,6 +26,7 @@ trait PerRequest extends Actor with JsonSupport {
   override def receive: Receive = {
 //    case res: RestMessage => complete(OK, res)
     case res: UserWithId => complete(OK, res)
+    case res: VisitWithId => complete(OK, res)
     case v: Validation => complete(BadRequest, v)
     case ReceiveTimeout => complete(GatewayTimeout, Error("Request timeout"))
   }

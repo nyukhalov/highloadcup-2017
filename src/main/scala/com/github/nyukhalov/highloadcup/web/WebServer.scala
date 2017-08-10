@@ -24,6 +24,13 @@ class WebServer(implicit actorSystem: ActorSystem, mat: Materializer, ec: Execut
       }
     }
 
+  val getUserVisits =
+    path("users" / IntNumber / "visits") {
+      id => get {
+        complete("stub")
+      }
+    }
+
   val getVisitRoute =
     path("visits" / IntNumber) {
       id => get {
@@ -42,7 +49,14 @@ class WebServer(implicit actorSystem: ActorSystem, mat: Materializer, ec: Execut
       }
     }
 
-  val route: Route = getUserRoute ~ getVisitRoute ~ getLocationRoute
+  val getLocationAvgMark =
+    path("locations" / IntNumber / "avg") {
+      id => get {
+        complete("5")
+      }
+    }
+
+  val route: Route = getUserRoute ~ getUserVisits ~ getVisitRoute ~ getLocationRoute ~ getLocationAvgMark
 
   def getUserWithId(id: Int): Route = ctx => {
     val p = Promise[RouteResult]

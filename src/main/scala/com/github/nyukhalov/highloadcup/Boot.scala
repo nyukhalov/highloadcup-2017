@@ -2,6 +2,8 @@ package com.github.nyukhalov.highloadcup
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
+import com.github.nyukhalov.highloadcup.core.AppLogger
+
 import scala.concurrent.duration._
 import scala.concurrent.Await
 

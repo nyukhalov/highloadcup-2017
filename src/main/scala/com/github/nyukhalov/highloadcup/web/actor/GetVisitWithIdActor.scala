@@ -1,7 +1,7 @@
 package com.github.nyukhalov.highloadcup.web.actor
 
 import akka.actor.Actor
-import com.github.nyukhalov.highloadcup.AppLogger
+import com.github.nyukhalov.highloadcup.core.AppLogger
 import com.github.nyukhalov.highloadcup.core.domain.Visit
 import com.github.nyukhalov.highloadcup.web.domain.{GetVisitWithId, VisitWithId}
 

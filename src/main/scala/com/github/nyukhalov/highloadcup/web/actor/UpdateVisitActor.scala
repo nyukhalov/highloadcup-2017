@@ -14,7 +14,13 @@ class UpdateVisitActor(entityRepository: EntityRepository) extends Actor {
           to ! NotExist(s"Visit with id $id does not exis")
 
         case Some(v) =>
-          val updatedVisit = Visit(id, visitUpdate.location, visitUpdate.user, visitUpdate.visitedAt, visitUpdate.mark)
+          val updatedVisit = Visit(
+            id,
+            visitUpdate.location.getOrElse(v.location),
+            visitUpdate.user.getOrElse(v.user),
+            visitUpdate.visitedAt.getOrElse(v.visitedAt),
+            visitUpdate.mark.getOrElse(v.mark)
+          )
           entityRepository.saveVisit(updatedVisit)
           to ! SuccessfulOperation
       }

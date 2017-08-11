@@ -13,8 +13,14 @@ class UpdateLocationActor(entityRepository: EntityRepository) extends Actor {
         case None =>
           to ! NotExist(s"Location with id $id does not exis")
 
-        case Some(v) =>
-          val updatedLocation = Location(id, locationUpdate.place, locationUpdate.country, locationUpdate.city, locationUpdate.distance)
+        case Some(l) =>
+          val updatedLocation = Location(
+            id,
+            locationUpdate.place.getOrElse(l.place),
+            locationUpdate.country.getOrElse(l.country),
+            locationUpdate.city.getOrElse(l.city),
+            locationUpdate.distance.getOrElse(l.distance)
+          )
           entityRepository.saveLocation(updatedLocation)
           to ! SuccessfulOperation
       }

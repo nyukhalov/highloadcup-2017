@@ -127,4 +127,41 @@ class UsersRouteSpecification extends Specification with Specs2RouteTest with Mo
       contentType      === `application/json`
     }
   }
+
+  "update email of existing user" in {
+    val er = mock[EntityRepository]
+    val route = new UsersRoute {
+      override def actorSys: ActorSystem = actorSystem
+      override def entityRepository: EntityRepository = er
+    }.usersRoute
+
+
+    val id = 1
+    val email = "email@gg.g"
+    val email2 = "----"
+    val firstName = "fn"
+    val lastName = "sn"
+    val gender = "m"
+    val birthDate = 123
+
+    val existingUser = User(id, email, firstName, lastName, gender, birthDate)
+    val expectedUser = User(id, email2, firstName, lastName, gender, birthDate)
+
+    er.getUser(id) returns Some(existingUser)
+
+    val correctRequest = ByteString(
+      s"""
+         |{
+         |  "email": "$email2"
+         |}
+          """.stripMargin
+    )
+
+    Post(s"/users/$id", HttpEntity(MediaTypes.`application/json`, correctRequest)) ~> route ~> check {
+      status           === OK
+      //      contentType      === `application/json`
+      responseAs[String] === ""
+      there was one(er).saveUser(meq(expectedUser))
+    }
+  }
 }

@@ -14,7 +14,14 @@ class UpdateUserActor(entityRepository: EntityRepository) extends Actor {
           to ! NotExist(s"User with id $id does not exis")
 
         case Some(u) =>
-          val updatedUser = User(id, userUpdate.email, userUpdate.firstName, userUpdate.lastName, userUpdate.gender, userUpdate.birthDate)
+          val updatedUser = User(
+            id,
+            userUpdate.email.getOrElse(u.email),
+            userUpdate.firstName.getOrElse(u.firstName),
+            userUpdate.lastName.getOrElse(u.lastName),
+            userUpdate.gender.getOrElse(u.gender),
+            userUpdate.birthDate.getOrElse(u.birthDate)
+          )
           entityRepository.saveUser(updatedUser)
           to ! SuccessfulOperation
       }

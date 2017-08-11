@@ -7,9 +7,9 @@ trait RestMessage
 trait RestRequest
 
 // for updating
-final case class UserUpdate(email: String, firstName: String, lastName: String, gender: String, birthDate: Long)
-final case class VisitUpdate(location: Int, user: Int, visitedAt: Long, mark: Int)
-final case class LocationUpdate(place: String, country: String, city: String, distance: Int)
+final case class UserUpdate(email: Option[String], firstName: Option[String], lastName: Option[String], gender: Option[String], birthDate: Option[Long])
+final case class VisitUpdate(location: Option[Int], user: Option[Int], visitedAt: Option[Long], mark: Option[Int])
+final case class LocationUpdate(place: Option[String], country: Option[String], city: Option[String], distance: Option[Int])
 
 // update entity
 final case class UpdateUser(id: Int, userUpdate: UserUpdate) extends RestRequest

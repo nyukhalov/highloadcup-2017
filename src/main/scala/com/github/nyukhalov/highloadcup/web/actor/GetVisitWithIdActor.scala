@@ -2,14 +2,18 @@ package com.github.nyukhalov.highloadcup.web.actor
 
 import akka.actor.Actor
 import com.github.nyukhalov.highloadcup.core.AppLogger
-import com.github.nyukhalov.highloadcup.core.domain.Visit
-import com.github.nyukhalov.highloadcup.web.domain.{GetVisitWithId, VisitWithId}
+import com.github.nyukhalov.highloadcup.core.repository.EntityRepository
+import com.github.nyukhalov.highloadcup.web.domain.{GetVisitWithId, NotExist, VisitWithId}
 
-class GetVisitWithIdActor extends Actor with AppLogger {
+class GetVisitWithIdActor(entityRepository: EntityRepository) extends Actor with AppLogger {
 
   override def receive: Receive = {
     case GetVisitWithId(id) =>
-      val visit = Visit(id, 10, 1, 123, 4)
-      sender() ! VisitWithId(visit)
+      val to = sender()
+      val visit = entityRepository.getVisit(id)
+      visit match {
+        case None => to ! NotExist(s"Visit with id $id does not exist")
+        case Some(v) => to ! VisitWithId(v)
+      }
   }
 }

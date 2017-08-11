@@ -19,4 +19,5 @@ final case class LocationWithId(location: Location) extends RestMessage
 // model
 final case class Validation(msg: String)
 final case class Error(msg: String)
+final case class NotExist(msg: String)
 

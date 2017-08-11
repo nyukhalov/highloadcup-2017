@@ -19,6 +19,7 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   // model
   implicit val errorFormat = jsonFormat1(Error)
   implicit val validationFormat = jsonFormat1(Validation)
+  implicit val notExistFormat = jsonFormat1(NotExist)
 
   // rest messages (responses)
   implicit object UserWithIdFormat extends RootJsonFormat[UserWithId] {

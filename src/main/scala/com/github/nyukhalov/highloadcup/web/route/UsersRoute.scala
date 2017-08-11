@@ -31,7 +31,7 @@ trait UsersRoute extends BaseRoute {
   def getUserWithId(id: Int): Route = ctx => {
     val p = Promise[RouteResult]
     implicit val actorSystem = as
-    perRequest(ctx, Props(classOf[GetUserWithIdActor]), GetUserWithId(id), p)
+    perRequest(ctx, Props(classOf[GetUserWithIdActor], entityRepository), GetUserWithId(id), p)
     p.future
   }
 }

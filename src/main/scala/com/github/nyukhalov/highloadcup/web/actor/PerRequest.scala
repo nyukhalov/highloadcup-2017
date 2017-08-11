@@ -28,6 +28,7 @@ trait PerRequest extends Actor with JsonSupport {
     case res: UserWithId => complete(OK, res)
     case res: VisitWithId => complete(OK, res)
     case res: LocationWithId => complete(OK, res)
+    case ne: NotExist => complete(NotFound, ne)
     case v: Validation => complete(BadRequest, v)
     case ReceiveTimeout => complete(GatewayTimeout, Error("Request timeout"))
   }

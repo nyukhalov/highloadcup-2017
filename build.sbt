@@ -1,7 +1,7 @@
 scalaVersion := "2.12.1"
 
 name := "highloadcup"
-organization := "NewHighLow"
+organization := "com.github.nyukhalov"
 version := "1.0"
 
 resolvers ++= Seq(
@@ -23,3 +23,29 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-stream-testkit" % "2.5.3" % Test,
   "com.typesafe.akka" %% "akka-http-testkit" % "10.0.9" % Test
 )
+
+
+exportJars := true
+mainClass in Compile := Option("com.github.nyukhalov.highloadcup.Boot")
+
+enablePlugins(JavaAppPackaging, sbtdocker.DockerPlugin)
+
+dockerfile in docker := {
+  val appDir: File = stage.value
+  val targetDir = "/app"
+
+  new Dockerfile {
+    from("java")
+    entryPoint(s"$targetDir/bin/${executableScriptName.value}")
+    copy(appDir, targetDir)
+    expose(80)
+
+//    env("SPARK_BUILD", s"spark-${sparkVersion}-bin-hadoop2.4")
+//    runRaw("""wget http://d3kbcqa49mib13.cloudfront.net/$SPARK_BUILD.tgz && \
+//              tar -xvf $SPARK_BUILD.tgz && \
+//              mv $SPARK_BUILD /spark && \
+//              rm $SPARK_BUILD.tgz
+//           """)
+//    run("mkdir", "-p", "/database")
+  }
+}

@@ -77,7 +77,8 @@ class WebServer(implicit actorSystem: ActorSystem, mat: Materializer, ec: Execut
   }
 
   def start(): Unit = {
-    Http().bind("localhost", 8080).runForeach(_.handleWith(Route.handlerFlow(route)))
-    logger.info(s"Server started")
+    val port = 80
+    Http().bind("0.0.0.0", port).runForeach(_.handleWith(Route.handlerFlow(route)))
+    logger.info(s"Server started on port $port")
   }
 }

@@ -21,7 +21,9 @@ libraryDependencies ++= Seq(
 
   "com.typesafe.akka" %% "akka-testkit" % "2.5.3" % Test,
   "com.typesafe.akka" %% "akka-stream-testkit" % "2.5.3" % Test,
-  "com.typesafe.akka" %% "akka-http-testkit" % "10.0.9" % Test
+  "com.typesafe.akka" %% "akka-http-testkit" % "10.0.9" % Test,
+  "org.specs2" %% "specs2-core" % "3.9.1" % "test",
+  "org.specs2" %% "specs2-mock" % "3.9.1" % "test"
 )
 
 
@@ -49,3 +51,9 @@ dockerfile in docker := {
 //    run("mkdir", "-p", "/database")
   }
 }
+
+// can slow down building image
+//buildOptions in docker := BuildOptions(
+//  cache = false,
+//  removeIntermediateContainers = BuildOptions.Remove.Always
+//)

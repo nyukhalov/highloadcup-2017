@@ -5,8 +5,8 @@ import akka.http.scaladsl.server.Directives.{complete, get, path}
 import akka.http.scaladsl.server.{Route, RouteResult}
 import akka.http.scaladsl.server.Directives._
 import com.github.nyukhalov.highloadcup.core.domain.Location
-import com.github.nyukhalov.highloadcup.web.actor.{CreateLocationActor, GetLocationWithIdActor}
-import com.github.nyukhalov.highloadcup.web.domain.{CreateLocation, GetLocationWithId}
+import com.github.nyukhalov.highloadcup.web.actor.{CreateLocationActor, GetLocationWithIdActor, UpdateLocationActor}
+import com.github.nyukhalov.highloadcup.web.domain.{CreateLocation, GetLocationWithId, LocationUpdate, UpdateLocation}
 
 import scala.concurrent.Promise
 
@@ -23,12 +23,19 @@ trait LocationsRoute extends BaseRoute {
     }
 
   private val getLocationRoute =
-    path("locations" / IntNumber) {
-      id => get {
+    path("locations" / IntNumber) { id =>
+      get {
         getLocationWithId {
           id
         }
-      }
+      } ~
+        post {
+          decodeRequest {
+            entity(as[LocationUpdate]) {
+              locationUpdate => updateLocation(id, locationUpdate)
+            }
+          }
+        }
     }
 
   private val getLocationAvgMark =
@@ -51,6 +58,13 @@ trait LocationsRoute extends BaseRoute {
     val p = Promise[RouteResult]
     implicit val actorSystem = actorSys
     perRequest(ctx, Props(classOf[CreateLocationActor], entityRepository), CreateLocation(location), p)
+    p.future
+  }
+
+  def updateLocation(id: Int, locationUpdate: LocationUpdate): Route = ctx => {
+    val p = Promise[RouteResult]
+    implicit val actorSystem = actorSys
+    perRequest(ctx, Props(classOf[UpdateLocationActor], entityRepository), UpdateLocation(id, locationUpdate), p)
     p.future
   }
 }

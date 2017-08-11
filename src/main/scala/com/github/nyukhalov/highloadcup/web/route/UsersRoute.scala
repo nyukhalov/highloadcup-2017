@@ -5,8 +5,8 @@ import akka.http.scaladsl.server.Directives.{complete, get, path}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{Route, RouteResult}
 import com.github.nyukhalov.highloadcup.core.domain.User
-import com.github.nyukhalov.highloadcup.web.actor.{CreateUserActor, GetUserWithIdActor}
-import com.github.nyukhalov.highloadcup.web.domain.{CreateUser, GetUserWithId}
+import com.github.nyukhalov.highloadcup.web.actor.{CreateUserActor, GetUserWithIdActor, UpdateUserActor}
+import com.github.nyukhalov.highloadcup.web.domain.{CreateUser, GetUserWithId, UpdateUser, UserUpdate}
 
 import scala.concurrent.Promise
 
@@ -23,9 +23,16 @@ trait UsersRoute extends BaseRoute {
     }
 
   private val getUserRoute =
-    path("users" / IntNumber) {
-      id => get {
+    path("users" / IntNumber) { id =>
+      get {
         getUserWithId { id }
+      } ~
+      post {
+        decodeRequest {
+          entity(as[UserUpdate]) {
+            userUpdate => updateUser(id, userUpdate)
+          }
+        }
       }
     }
 
@@ -49,6 +56,13 @@ trait UsersRoute extends BaseRoute {
     val p = Promise[RouteResult]
     implicit val actorSystem = actorSys
     perRequest(ctx, Props(classOf[CreateUserActor], entityRepository), CreateUser(user), p)
+    p.future
+  }
+
+  def updateUser(id: Int, userUpdate: UserUpdate): Route = ctx => {
+    val p = Promise[RouteResult]
+    implicit val actorSystem = actorSys
+    perRequest(ctx, Props(classOf[UpdateUserActor], entityRepository), UpdateUser(id, userUpdate), p)
     p.future
   }
 }

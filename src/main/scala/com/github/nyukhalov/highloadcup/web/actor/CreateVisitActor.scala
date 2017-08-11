@@ -11,7 +11,7 @@ class CreateVisitActor(entityRepository: EntityRepository) extends Actor {
 
       entityRepository.getVisit(visit.id) match {
         case None =>
-          entityRepository.addVisit(visit)
+          entityRepository.saveVisit(visit)
           to ! SuccessfulOperation
 
         case Some(u) =>

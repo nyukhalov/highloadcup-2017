@@ -11,7 +11,7 @@ class CreateUserActor(entityRepository: EntityRepository) extends Actor {
 
       entityRepository.getUser(user.id) match {
         case None =>
-          entityRepository.addUser(user)
+          entityRepository.saveUser(user)
           to ! SuccessfulOperation
 
         case Some(u) =>

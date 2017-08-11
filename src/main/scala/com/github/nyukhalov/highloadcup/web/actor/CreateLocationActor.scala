@@ -11,7 +11,7 @@ class CreateLocationActor(entityRepository: EntityRepository) extends Actor {
 
       entityRepository.getLocation(location.id) match {
         case None =>
-          entityRepository.addLocation(location)
+          entityRepository.saveLocation(location)
           to ! SuccessfulOperation
 
         case Some(u) =>

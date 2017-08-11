@@ -10,6 +10,10 @@ trait JsonSupport extends LowerCaseJsonProtocol with DomainJsonProtocol {
   implicit val validationFormat = jsonFormat1(Validation)
   implicit val notExistFormat = jsonFormat1(NotExist)
 
+  implicit val userUpdateFormat = jsonFormat5(UserUpdate)
+  implicit val visitUpdateFormat = jsonFormat4(VisitUpdate)
+  implicit val locationUpdateFormat = jsonFormat4(LocationUpdate)
+
   // rest messages (responses)
   implicit object UserWithIdFormat extends RootJsonFormat[UserWithId] {
     override def read(json: JsValue): UserWithId = {

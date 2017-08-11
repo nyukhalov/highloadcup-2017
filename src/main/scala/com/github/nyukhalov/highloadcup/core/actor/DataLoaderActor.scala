@@ -41,15 +41,15 @@ class DataLoaderActor(entityRepository: EntityRepository) extends Actor with App
       f.name.split("_")(0) match {
         case "users" =>
           val users = content.parseJson.convertTo[Users]
-          users.users.foreach(u => entityRepository.addUser(u))
+          users.users.foreach(u => entityRepository.saveUser(u))
 
         case "locations" =>
           val locations = content.parseJson.convertTo[Locations]
-          locations.locations.foreach(l => entityRepository.addLocation(l))
+          locations.locations.foreach(l => entityRepository.saveLocation(l))
 
         case "visits" =>
           val visits = content.parseJson.convertTo[Visits]
-          visits.visits.foreach(v => entityRepository.addVisit(v))
+          visits.visits.foreach(v => entityRepository.saveVisit(v))
 
         case t => logger.error(s"Unknown type of data: $t")
       }

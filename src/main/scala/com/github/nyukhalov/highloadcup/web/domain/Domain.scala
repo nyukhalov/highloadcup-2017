@@ -5,6 +5,17 @@ import com.github.nyukhalov.highloadcup.core.domain.{Location, User, Visit}
 // rest messages
 trait RestMessage
 trait RestRequest
+
+// for updating
+final case class UserUpdate(email: String, firstName: String, lastName: String, gender: String, birthDate: Long)
+final case class VisitUpdate(location: Int, user: Int, visitedAt: Long, mark: Int)
+final case class LocationUpdate(place: String, country: String, city: String, distance: Int)
+
+// update entity
+final case class UpdateUser(id: Int, userUpdate: UserUpdate) extends RestRequest
+final case class UpdateVisit(id: Int, updateVisit: VisitUpdate) extends RestRequest
+final case class UpdateLocation(id: Int, updateLocation: LocationUpdate) extends RestRequest
+
 // create user
 final case class CreateUser(user: User) extends RestRequest
 // get user by id

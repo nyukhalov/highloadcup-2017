@@ -5,8 +5,8 @@ import akka.http.scaladsl.server.Directives.{get, path}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{Route, RouteResult}
 import com.github.nyukhalov.highloadcup.core.domain.Visit
-import com.github.nyukhalov.highloadcup.web.actor.{CreateVisitActor, GetVisitWithIdActor}
-import com.github.nyukhalov.highloadcup.web.domain.{CreateVisit, GetVisitWithId}
+import com.github.nyukhalov.highloadcup.web.actor.{CreateVisitActor, GetVisitWithIdActor, UpdateVisitActor}
+import com.github.nyukhalov.highloadcup.web.domain.{CreateVisit, GetVisitWithId, UpdateVisit, VisitUpdate}
 
 import scala.concurrent.Promise
 
@@ -23,12 +23,19 @@ trait VisitsRoute extends BaseRoute {
     }
 
   private val getVisitRoute =
-    path("visits" / IntNumber) {
-      id => get {
+    path("visits" / IntNumber) { id =>
+      get {
         getVisitWithId {
           id
         }
-      }
+      } ~
+        post {
+          decodeRequest {
+            entity(as[VisitUpdate]) {
+              visitUpdate => updateVisit(id, visitUpdate)
+            }
+          }
+        }
     }
 
   val visitsRoute: Route = getVisitRoute ~ createVisitRoute
@@ -44,6 +51,13 @@ trait VisitsRoute extends BaseRoute {
     val p = Promise[RouteResult]
     implicit val actorSystem = actorSys
     perRequest(ctx, Props(classOf[CreateVisitActor], entityRepository), CreateVisit(visit), p)
+    p.future
+  }
+
+  def updateVisit(id: Int, visitUpdate: VisitUpdate): Route = ctx => {
+    val p = Promise[RouteResult]
+    implicit val actorSystem = actorSys
+    perRequest(ctx, Props(classOf[UpdateVisitActor], entityRepository), UpdateVisit(id, visitUpdate), p)
     p.future
   }
 }

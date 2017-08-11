@@ -87,7 +87,7 @@ class UsersRouteSpecification extends Specification with Specs2RouteTest with Mo
       status           === OK
 //      contentType      === `application/json`
       responseAs[String] === ""
-      there was one(er).addUser(meq(expectedUser))
+      there was one(er).saveUser(meq(expectedUser))
     }
   }
 

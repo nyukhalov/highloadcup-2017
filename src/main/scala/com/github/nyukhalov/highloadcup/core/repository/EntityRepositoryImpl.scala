@@ -10,18 +10,24 @@ class EntityRepositoryImpl extends EntityRepository {
   override def getUser(id: Int): Option[User] = id2User.get(id)
 
   override def saveUser(user: User): Unit = {
-    id2User += (user.id -> user)
+    id2User.synchronized {
+      id2User += (user.id -> user)
+    }
   }
 
   override def getVisit(id: Int): Option[Visit] = id2Visit.get(id)
 
   override def saveVisit(visit: Visit): Unit = {
-    id2Visit += (visit.id -> visit)
+    id2Visit.synchronized {
+      id2Visit += (visit.id -> visit)
+    }
   }
 
   override def getLocation(id: Int): Option[Location] = id2Location.get(id)
 
   override def saveLocation(location: Location): Unit = {
-    id2Location += (location.id -> location)
+    id2Location.synchronized {
+      id2Location += (location.id -> location)
+    }
   }
 }

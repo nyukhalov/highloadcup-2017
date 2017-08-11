@@ -23,7 +23,7 @@ trait VisitsRoute extends BaseRoute {
 
   def getVisitWithId(id: Int): Route = ctx => {
     val p = Promise[RouteResult]
-    implicit val actorSystem = as
+    implicit val actorSystem = actorSys
     perRequest(ctx, Props(classOf[GetVisitWithIdActor], entityRepository), GetVisitWithId(id), p)
     p.future
   }

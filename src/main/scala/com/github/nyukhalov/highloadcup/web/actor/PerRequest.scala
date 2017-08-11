@@ -28,12 +28,14 @@ trait PerRequest extends Actor with JsonSupport {
     case res: UserWithId => complete(OK, res)
     case res: VisitWithId => complete(OK, res)
     case res: LocationWithId => complete(OK, res)
+
+    case SuccessfulOperation => complete(OK, Option.empty)
     case ne: NotExist => complete(NotFound, ne)
     case v: Validation => complete(BadRequest, v)
     case ReceiveTimeout => complete(GatewayTimeout, Error("Request timeout"))
   }
 
-  def complete(m: => ToResponseMarshallable) = {
+  def complete(m: => ToResponseMarshallable): Unit = {
     val f = r.complete(m)
     f.onComplete(p.complete(_))
     stop(self)

@@ -28,7 +28,7 @@ trait LocationsRoute extends BaseRoute {
 
   def getLocationWithId(id: Int): Route = ctx => {
     val p = Promise[RouteResult]
-    implicit val actorSystem = as
+    implicit val actorSystem = actorSys
     perRequest(ctx, Props(classOf[GetLocationWithIdActor], entityRepository), GetLocationWithId(id), p)
     p.future
   }

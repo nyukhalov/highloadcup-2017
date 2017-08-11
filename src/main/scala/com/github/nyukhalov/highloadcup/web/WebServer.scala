@@ -15,7 +15,7 @@ class WebServer(serverPort: Int, val entityRepository: EntityRepository)
                (implicit actorSystem: ActorSystem, mat: Materializer, ec: ExecutionContext)
   extends UsersRoute with VisitsRoute with LocationsRoute with AppLogger {
 
-  override def as: ActorSystem = implicitly
+  override def actorSys: ActorSystem = implicitly
 
   val route: Route = usersRoute ~ visitsRoute ~ locationsRoute
 

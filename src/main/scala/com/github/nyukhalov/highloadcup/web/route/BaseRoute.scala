@@ -6,6 +6,6 @@ import com.github.nyukhalov.highloadcup.web.actor.PerRequestCreator
 import com.github.nyukhalov.highloadcup.web.json.JsonSupport
 
 trait BaseRoute extends PerRequestCreator with JsonSupport {
-  def as: ActorSystem
+  def actorSys: ActorSystem
   def entityRepository: EntityRepository
 }

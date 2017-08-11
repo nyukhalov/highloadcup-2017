@@ -11,7 +11,7 @@ import com.github.nyukhalov.highloadcup.web.route.{LocationsRoute, UsersRoute, V
 
 import scala.concurrent.ExecutionContext
 
-class WebServer(val entityRepository: EntityRepository)
+class WebServer(serverPort: Int, val entityRepository: EntityRepository)
                (implicit actorSystem: ActorSystem, mat: Materializer, ec: ExecutionContext)
   extends UsersRoute with VisitsRoute with LocationsRoute with AppLogger {
 
@@ -20,8 +20,7 @@ class WebServer(val entityRepository: EntityRepository)
   val route: Route = usersRoute ~ visitsRoute ~ locationsRoute
 
   def start(): Unit = {
-    val port = 80
-    Http().bind("0.0.0.0", port).runForeach(_.handleWith(Route.handlerFlow(route)))
-    logger.info(s"Server started on port $port")
+    Http().bind("0.0.0.0", serverPort).runForeach(_.handleWith(Route.handlerFlow(route)))
+    logger.info(s"Server started on port $serverPort")
   }
 }

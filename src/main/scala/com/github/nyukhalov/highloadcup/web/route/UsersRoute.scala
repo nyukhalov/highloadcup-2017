@@ -22,7 +22,7 @@ trait UsersRoute extends BaseRoute {
  private val getUserVisits =
   path("users" / IntNumber / "visits") {
    id => get {
-    complete("stub")
+    complete("заглушка")
    }
   }
 

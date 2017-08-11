@@ -18,6 +18,7 @@ libraryDependencies ++= Seq(
   "com.typesafe"                %  "config"                 % "1.3.1",
   "ch.qos.logback"              %  "logback-classic"        % "1.2.3",
   "com.typesafe.scala-logging"  %% "scala-logging"          % "3.7.2",
+  "com.github.pathikrit" %% "better-files" % "3.0.0",
 
   "com.typesafe.akka" %% "akka-testkit" % "2.5.3" % Test,
   "com.typesafe.akka" %% "akka-stream-testkit" % "2.5.3" % Test,

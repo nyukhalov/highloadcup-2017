@@ -9,13 +9,19 @@ class EntityRepositoryImpl extends EntityRepository {
 
   override def getUser(id: Int): Option[User] = id2User.get(id)
 
-  override def addUser(user: User): Unit = ???
+  override def addUser(user: User): Unit = {
+    id2User += (user.id -> user)
+  }
 
   override def getVisit(id: Int): Option[Visit] = id2Visit.get(id)
 
-  override def addVisit(visit: Visit): Unit = ???
+  override def addVisit(visit: Visit): Unit = {
+    id2Visit += (visit.id -> visit)
+  }
 
   override def getLocation(id: Int): Option[Location] = id2Location.get(id)
 
-  override def addLocation(location: Location): Unit = ???
+  override def addLocation(location: Location): Unit = {
+    id2Location += (location.id -> location)
+  }
 }

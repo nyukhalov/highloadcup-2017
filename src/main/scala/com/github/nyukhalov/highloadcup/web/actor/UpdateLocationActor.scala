@@ -11,7 +11,7 @@ class UpdateLocationActor(entityRepository: EntityRepository) extends Actor {
       val to = sender()
       entityRepository.getLocation(id) match {
         case None =>
-          to ! NotExist(s"Location with id $id does not exis")
+          to ! NotExist(s"Location with id $id does not exist")
 
         case Some(l) =>
           val updatedLocation = Location(

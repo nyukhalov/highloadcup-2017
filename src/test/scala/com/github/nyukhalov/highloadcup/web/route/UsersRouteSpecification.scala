@@ -85,8 +85,8 @@ class UsersRouteSpecification extends Specification with Specs2RouteTest with Mo
 
     Post("/users/new", HttpEntity(MediaTypes.`application/json`, correctRequest)) ~> route ~> check {
       status           === OK
-//      contentType      === `application/json`
-      responseAs[String] === ""
+      contentType      === `application/json`
+      responseAs[String] === "{}"
       there was one(er).saveUser(meq(expectedUser))
     }
   }
@@ -159,8 +159,8 @@ class UsersRouteSpecification extends Specification with Specs2RouteTest with Mo
 
     Post(s"/users/$id", HttpEntity(MediaTypes.`application/json`, correctRequest)) ~> route ~> check {
       status           === OK
-      //      contentType      === `application/json`
-      responseAs[String] === ""
+      contentType      === `application/json`
+      responseAs[String] === "{}"
       there was one(er).saveUser(meq(expectedUser))
     }
   }

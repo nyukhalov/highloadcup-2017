@@ -8,7 +8,7 @@ import akka.http.scaladsl.server.{RequestContext, RouteResult}
 import com.github.nyukhalov.highloadcup.web.actor.PerRequest.{WithActorRef, WithProps}
 import com.github.nyukhalov.highloadcup.web.domain._
 import com.github.nyukhalov.highloadcup.web.json.JsonSupport
-
+import spray.json._
 import scala.concurrent.Promise
 import scala.concurrent.duration._
 
@@ -29,7 +29,7 @@ trait PerRequest extends Actor with JsonSupport {
     case res: VisitWithId => complete(OK, res)
     case res: LocationWithId => complete(OK, res)
 
-    case SuccessfulOperation => complete(OK, Option.empty)
+    case SuccessfulOperation => complete(OK, "{}".parseJson)
     case ne: NotExist => complete(NotFound, ne)
     case v: Validation => complete(BadRequest, v)
     case ReceiveTimeout => complete(GatewayTimeout, Error("Request timeout"))

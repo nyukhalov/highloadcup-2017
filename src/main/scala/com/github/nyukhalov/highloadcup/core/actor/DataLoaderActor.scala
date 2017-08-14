@@ -38,7 +38,13 @@ class DataLoaderActor() extends Actor with AppLogger with DomainJsonProtocol {
 
   private def loadData(workdir: File) = {
     logger.info("Loading data..")
-    workdir.children.toList.foreach(f => {
+
+    val entity2loadPriority = Map("users" -> 1, "locations" -> 2, "visits" -> 3)
+
+    workdir.children.toList.map(x => {
+      val entityName = x.name.split("_")(0)
+      (x, entity2loadPriority(entityName))
+    }).sortBy(_._2).foreach { case (f, _) =>
       logger.info(s"Read file: $f")
 
       val content = f.contentAsString(charset = Charset.forName("UTF-8"))
@@ -68,7 +74,7 @@ class DataLoaderActor() extends Actor with AppLogger with DomainJsonProtocol {
 
         case t => logger.error(s"Unknown type of data: $t")
       }
-    })
+    }
     logger.info("Data loaded successfully")
   }
 

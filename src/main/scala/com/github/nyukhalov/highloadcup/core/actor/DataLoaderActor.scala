@@ -8,7 +8,11 @@ import com.github.nyukhalov.highloadcup.core.repository.EntityRepository
 import better.files._
 import com.github.nyukhalov.highloadcup.core.domain._
 import com.github.nyukhalov.highloadcup.core.json.DomainJsonProtocol
+import com.github.nyukhalov.highloadcup.database.DB
 import spray.json._
+import scala.concurrent.duration._
+
+import scala.concurrent.{Await, Future, duration}
 
 object DataLoaderActor {
 
@@ -43,20 +47,36 @@ class DataLoaderActor(entityRepository: EntityRepository) extends Actor with App
       f.name.split("_")(0) match {
         case "users" =>
           val users = content.parseJson.convertTo[Users]
-          users.users.foreach(u => entityRepository.saveUser(u))
+          val futures = users.users.map(u => {
+            DB.insertUser(u)
+          })
+          wait(futures)
 
         case "locations" =>
           val locations = content.parseJson.convertTo[Locations]
-          locations.locations.foreach(l => entityRepository.saveLocation(l))
+          val futures = locations.locations.map(l => {
+            DB.insertLocation(l)
+          })
+          wait(futures)
+
 
         case "visits" =>
           val visits = content.parseJson.convertTo[Visits]
-          visits.visits.foreach(v => entityRepository.saveVisit(v))
+          val futures = visits.visits.map(v => {
+            DB.insertVisit(v)
+          })
+          wait(futures)
 
         case t => logger.error(s"Unknown type of data: $t")
       }
     })
     logger.info("Data loaded successfully")
+  }
+
+  private def wait[T](futures: List[Future[T]]): Unit = {
+    implicit val ec = context.dispatcher
+    val f = Future.sequence(futures)
+    Await.result(f, 20.seconds)
   }
 
   override def receive: Receive = {

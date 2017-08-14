@@ -19,6 +19,11 @@ object DB {
   }
 
   // users
+  def insertUsers(newUsers: List[User]): Future[AnyRef] = {
+    val r = users ++= newUsers
+    db.run(r)
+  }
+
   def insertUser(user: User): Future[Int] = {
     val r = users += user
     db.run(r)
@@ -35,6 +40,11 @@ object DB {
   }
 
   // locations
+  def insertLocations(newLocations: List[Location]): Future[AnyRef] = {
+    val r = locations ++= newLocations
+    db.run(r)
+  }
+
   def insertLocation(location: Location): Future[Int] = {
     val r = locations += location
     db.run(r)
@@ -51,6 +61,11 @@ object DB {
   }
 
   // visits
+  def insertVisits(newVisits: List[Visit]): Future[AnyRef] = {
+    val r = visits ++= newVisits
+    db.run(r)
+  }
+
   def insertVisit(visit: Visit): Future[Int] = {
     val r = visits += visit
     db.run(r)

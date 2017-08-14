@@ -52,25 +52,19 @@ class DataLoaderActor() extends Actor with AppLogger with DomainJsonProtocol {
       f.name.split("_")(0) match {
         case "users" =>
           val users = content.parseJson.convertTo[Users]
-          val futures = users.users.map(u => {
-            DB.insertUser(u)
-          })
-          wait(futures)
+          val f = DB.insertUsers(users.users)
+          wait(f)
 
         case "locations" =>
           val locations = content.parseJson.convertTo[Locations]
-          val futures = locations.locations.map(l => {
-            DB.insertLocation(l)
-          })
-          wait(futures)
+          val f = DB.insertLocations(locations.locations)
+          wait(f)
 
 
         case "visits" =>
           val visits = content.parseJson.convertTo[Visits]
-          val futures = visits.visits.map(v => {
-            DB.insertVisit(v)
-          })
-          wait(futures)
+          val f = DB.insertVisits(visits.visits)
+          wait(f)
 
         case t => logger.error(s"Unknown type of data: $t")
       }
@@ -78,10 +72,9 @@ class DataLoaderActor() extends Actor with AppLogger with DomainJsonProtocol {
     logger.info("Data loaded successfully")
   }
 
-  private def wait[T](futures: List[Future[T]]): Unit = {
+  private def wait[T](future: Future[T]) = {
     implicit val ec = context.dispatcher
-    val f = Future.sequence(futures)
-    Await.result(f, 20.seconds)
+    Await.result(future, 30.seconds)
   }
 
   override def receive: Receive = {

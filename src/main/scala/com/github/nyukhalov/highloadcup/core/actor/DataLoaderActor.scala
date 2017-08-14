@@ -23,16 +23,18 @@ class DataLoaderActor(entityRepository: EntityRepository) extends Actor with App
 
   private def unzipFiles(pathToZip: String) = {
     val workdir = File.newTemporaryDirectory()
-    logger.info(s"Extract data from $pathToZip to directory $workdir")
+    logger.info(s"Extracting data from $pathToZip to directory $workdir")
 
     val zipFile = File(pathToZip)
     zipFile.unzipTo(destination = workdir)
 
     //    zipFile.delete(true)
+    logger.info("Data extracted successfully..")
     workdir
   }
 
   private def loadData(workdir: File) = {
+    logger.info("Loading data..")
     workdir.children.toList.foreach(f => {
       logger.info(s"Read file: $f")
 
@@ -54,6 +56,7 @@ class DataLoaderActor(entityRepository: EntityRepository) extends Actor with App
         case t => logger.error(s"Unknown type of data: $t")
       }
     })
+    logger.info("Data loaded successfully")
   }
 
   override def receive: Receive = {

@@ -1,21 +1,41 @@
 package com.github.nyukhalov.highloadcup.web.actor
 
 import akka.actor.Actor
-import com.github.nyukhalov.highloadcup.core.repository.EntityRepository
-import com.github.nyukhalov.highloadcup.web.domain.{CreateVisit, SuccessfulOperation, Validation}
+import com.github.nyukhalov.highloadcup.core.AppLogger
+import com.github.nyukhalov.highloadcup.database.DB
+import com.github.nyukhalov.highloadcup.web.domain._
 
-class CreateVisitActor(entityRepository: EntityRepository) extends Actor {
+import scala.util.{Failure, Success}
+
+class CreateVisitActor extends Actor with AppLogger {
+  implicit val ec = context.dispatcher
+
   override def receive: Receive = {
     case CreateVisit(visit) =>
       val to = sender()
 
-      entityRepository.getVisit(visit.id) match {
-        case None =>
-          entityRepository.saveVisit(visit)
-          to ! SuccessfulOperation
+      DB.findVisitById(visit.id).onComplete {
+        case Success(res) =>
+          res match {
+            case Some(_) =>
+              to ! Validation(s"Visit with id ${visit.id} already exists")
 
-        case Some(u) =>
-          to ! Validation(s"Visit with id ${visit.id} already exists")
+            case None =>
+              DB.insertVisit(visit).onComplete {
+                case Success(_) =>
+                  to ! SuccessfulOperation
+
+                case Failure(ex) =>
+                  val msg = s"Failed when save new visit $visit: ${ex.getMessage}"
+                  logger.error(msg, ex)
+                  to ! Error(msg)
+              }
+          }
+
+        case Failure(ex) =>
+          val msg = s"Failed when find visit with id ${visit.id}: ${ex.getMessage}"
+          logger.error(msg, ex)
+          to ! Error(msg)
       }
   }
 }

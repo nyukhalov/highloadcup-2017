@@ -61,7 +61,7 @@ object DB {
     db.run(r)
   }
 
-  def findVisitsById(id: Int)(implicit ec: ExecutionContext): Future[Option[Visit]] = {
+  def findVisitById(id: Int)(implicit ec: ExecutionContext): Future[Option[Visit]] = {
     val r = visits.filter(_.id === id).take(1).result
     db.run(r).map(_.headOption)
   }

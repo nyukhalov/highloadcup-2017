@@ -4,7 +4,6 @@ import java.nio.charset.Charset
 
 import akka.actor.{Actor, Props}
 import com.github.nyukhalov.highloadcup.core.AppLogger
-import com.github.nyukhalov.highloadcup.core.repository.EntityRepository
 import better.files._
 import com.github.nyukhalov.highloadcup.core.domain._
 import com.github.nyukhalov.highloadcup.core.json.DomainJsonProtocol
@@ -18,10 +17,10 @@ object DataLoaderActor {
 
   final case class LoadData(pathToZip: String)
 
-  def props(entityRepository: EntityRepository): Props = Props(classOf[DataLoaderActor], entityRepository)
+  def props(): Props = Props(classOf[DataLoaderActor])
 }
 
-class DataLoaderActor(entityRepository: EntityRepository) extends Actor with AppLogger with DomainJsonProtocol {
+class DataLoaderActor() extends Actor with AppLogger with DomainJsonProtocol {
 
   import DataLoaderActor._
 

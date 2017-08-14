@@ -50,21 +50,21 @@ trait LocationsRoute extends BaseRoute {
   def getLocationWithId(id: Int): Route = ctx => {
     val p = Promise[RouteResult]
     implicit val actorSystem = actorSys
-    perRequest(ctx, Props(classOf[GetLocationWithIdActor], entityRepository), GetLocationWithId(id), p)
+    perRequest(ctx, Props(classOf[GetLocationWithIdActor]), GetLocationWithId(id), p)
     p.future
   }
 
   def createLocation(location: Location): Route = ctx => {
     val p = Promise[RouteResult]
     implicit val actorSystem = actorSys
-    perRequest(ctx, Props(classOf[CreateLocationActor], entityRepository), CreateLocation(location), p)
+    perRequest(ctx, Props(classOf[CreateLocationActor]), CreateLocation(location), p)
     p.future
   }
 
   def updateLocation(id: Int, locationUpdate: LocationUpdate): Route = ctx => {
     val p = Promise[RouteResult]
     implicit val actorSystem = actorSys
-    perRequest(ctx, Props(classOf[UpdateLocationActor], entityRepository), UpdateLocation(id, locationUpdate), p)
+    perRequest(ctx, Props(classOf[UpdateLocationActor]), UpdateLocation(id, locationUpdate), p)
     p.future
   }
 }

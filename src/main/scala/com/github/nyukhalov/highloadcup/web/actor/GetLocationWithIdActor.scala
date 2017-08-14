@@ -1,17 +1,30 @@
 package com.github.nyukhalov.highloadcup.web.actor
 
 import akka.actor.Actor
-import com.github.nyukhalov.highloadcup.core.repository.EntityRepository
-import com.github.nyukhalov.highloadcup.web.domain.{GetLocationWithId, LocationWithId, NotExist}
+import com.github.nyukhalov.highloadcup.core.AppLogger
+import com.github.nyukhalov.highloadcup.database.DB
+import com.github.nyukhalov.highloadcup.web.domain._
 
-class GetLocationWithIdActor(entityRepository: EntityRepository) extends Actor {
+import scala.util.{Failure, Success}
+
+class GetLocationWithIdActor() extends Actor with AppLogger {
+  implicit val ec = context.dispatcher
+
   override def receive: Receive = {
     case GetLocationWithId(id) =>
       val to = sender()
-      val location = entityRepository.getLocation(id)
-      location match {
-        case None => to ! NotExist(s"Location with id $id does not exist")
-        case Some(l) => to ! LocationWithId(l)
+
+      DB.findLocationById(id).onComplete {
+        case Success(res) =>
+          res match {
+            case Some(location) => to ! LocationWithId(location)
+            case None => to ! NotExist(s"Location with id $id does not exist")
+          }
+
+        case Failure(ex) =>
+          val msg = s"Failed when finding location by id $id: ${ex.getMessage}"
+          logger.error(msg, ex)
+          to ! Error(msg)
       }
   }
 }

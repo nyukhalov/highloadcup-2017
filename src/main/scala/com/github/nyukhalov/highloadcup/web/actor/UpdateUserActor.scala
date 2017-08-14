@@ -2,13 +2,12 @@ package com.github.nyukhalov.highloadcup.web.actor
 
 import akka.actor.Actor
 import com.github.nyukhalov.highloadcup.core.domain.User
-import com.github.nyukhalov.highloadcup.core.repository.EntityRepository
 import com.github.nyukhalov.highloadcup.database.DB
 import com.github.nyukhalov.highloadcup.web.domain.{Error, NotExist, SuccessfulOperation, UpdateUser}
 
 import scala.util.{Failure, Success}
 
-class UpdateUserActor(entityRepository: EntityRepository) extends Actor {
+class UpdateUserActor() extends Actor {
   implicit val ec = context.dispatcher
 
   override def receive: Receive = {

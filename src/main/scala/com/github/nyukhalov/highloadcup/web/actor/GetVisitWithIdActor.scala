@@ -2,18 +2,29 @@ package com.github.nyukhalov.highloadcup.web.actor
 
 import akka.actor.Actor
 import com.github.nyukhalov.highloadcup.core.AppLogger
-import com.github.nyukhalov.highloadcup.core.repository.EntityRepository
-import com.github.nyukhalov.highloadcup.web.domain.{GetVisitWithId, NotExist, VisitWithId}
+import com.github.nyukhalov.highloadcup.database.DB
+import com.github.nyukhalov.highloadcup.web.domain._
 
-class GetVisitWithIdActor(entityRepository: EntityRepository) extends Actor with AppLogger {
+import scala.util.{Failure, Success}
+
+class GetVisitWithIdActor() extends Actor with AppLogger {
+  implicit val ec = context.dispatcher
 
   override def receive: Receive = {
     case GetVisitWithId(id) =>
       val to = sender()
-      val visit = entityRepository.getVisit(id)
-      visit match {
-        case None => to ! NotExist(s"Visit with id $id does not exist")
-        case Some(v) => to ! VisitWithId(v)
+
+      DB.findVisitById(id).onComplete {
+        case Success(res) =>
+          res match {
+            case Some(visit) => to ! VisitWithId(visit)
+            case None => to ! NotExist(s"Visit with id $id does not exist")
+          }
+
+        case Failure(ex) =>
+          val msg = s"Failed when finding visit by id $id: ${ex.getMessage}"
+          logger.error(msg, ex)
+          to ! Error(msg)
       }
   }
 }

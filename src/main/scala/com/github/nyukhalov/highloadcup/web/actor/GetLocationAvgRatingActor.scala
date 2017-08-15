@@ -4,7 +4,7 @@ import akka.actor.Actor
 import com.github.nyukhalov.highloadcup.core.AppLogger
 import com.github.nyukhalov.highloadcup.database.DB
 import com.github.nyukhalov.highloadcup.web.domain._
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, DateTimeZone}
 
 import scala.util.{Failure, Success}
 
@@ -17,7 +17,7 @@ class GetLocationAvgRatingActor extends Actor with AppLogger {
 
       logger.debug(s"Params: id=$id, fromDate=$fromDate, toDate=$toDate, fromAge=$fromAge, toAge=$toAge, gender=$gender")
 
-      val now = DateTime.now()
+      val now = DateTime.now(DateTimeZone.UTC).withTimeAtStartOfDay()
 
       val fromBirthDate = toAge.map(ta => now.minusYears(ta).getMillis * 1000)
       val toBirthDate = fromAge.map(fa => now.minusYears(fa).getMillis * 1000)

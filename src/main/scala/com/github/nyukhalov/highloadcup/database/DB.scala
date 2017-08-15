@@ -32,7 +32,7 @@ object DB {
 
     var joinRes = filteredVisits join users on(_.userId === _.id)
 
-    fromBirthDate.foreach(from => joinRes = joinRes.filter(_._2.birthDate > from))
+    fromBirthDate.foreach(from => joinRes = joinRes.filter(_._2.birthDate >= from))
     toBirthDate.foreach(to => joinRes = joinRes.filter(_._2.birthDate < to))
     gender.foreach(g => joinRes = joinRes.filter(_._2.gender === g))
 

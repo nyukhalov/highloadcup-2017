@@ -3,7 +3,7 @@ package com.github.nyukhalov.highloadcup.web.actor
 import java.util.UUID
 
 import akka.actor.SupervisorStrategy.Stop
-import akka.actor.{Actor, ActorRef, ActorSystem, OneForOneStrategy, Props, ReceiveTimeout}
+import akka.actor.{Actor, ActorRef, ActorSystem, OneForOneStrategy, Props, ReceiveTimeout, SupervisorStrategy}
 import akka.http.scaladsl.marshalling.ToResponseMarshallable
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server.{RequestContext, RouteResult}
@@ -46,7 +46,7 @@ trait PerRequest extends Actor with JsonSupport with AppLogger {
     stop(self)
   }
 
-  override val supervisorStrategy =
+  override val supervisorStrategy: SupervisorStrategy =
     OneForOneStrategy() {
       case e =>
         logger.error(s"Child actor was stopped after failure: ${e.getMessage}")
@@ -57,7 +57,7 @@ trait PerRequest extends Actor with JsonSupport with AppLogger {
 
 object PerRequest {
   case class WithProps(r: RequestContext, props: Props, message: RestRequest, p: Promise[RouteResult]) extends PerRequest {
-    lazy val target = context.actorOf(props, s"pr-target")
+    lazy val target: ActorRef = context.actorOf(props, "target")
   }
 }
 

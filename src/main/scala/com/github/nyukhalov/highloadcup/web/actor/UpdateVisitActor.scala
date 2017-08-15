@@ -15,32 +15,34 @@ class UpdateVisitActor extends Actor with AppLogger {
     case UpdateVisit(id, visitUpdate) =>
       val to = sender()
 
-      DB.findVisitById(id).onComplete {
-        case Success(res) =>
-          res match {
-            case None =>
-              to ! NotExist(s"Visit with id $id does not exist")
+      to ! SuccessfulOperation
 
-            case Some(v) =>
-              val updatedVisit = Visit(
-                id,
-                visitUpdate.location.getOrElse(v.location),
-                visitUpdate.user.getOrElse(v.user),
-                visitUpdate.visitedAt.getOrElse(v.visitedAt),
-                visitUpdate.mark.getOrElse(v.mark)
-              )
-
-              DB.updateVisit(updatedVisit).onComplete {
-                case Success(_) =>
-                  to ! SuccessfulOperation
-
-                case Failure(ex) =>
-                  to ! Error(ex.getMessage)
-              }
-          }
-
-        case Failure(ex) =>
-          to ! Error(ex.getMessage)
-      }
+//      DB.findVisitById(id).onComplete {
+//        case Success(res) =>
+//          res match {
+//            case None =>
+//              to ! NotExist(s"Visit with id $id does not exist")
+//
+//            case Some(v) =>
+//              val updatedVisit = Visit(
+//                id,
+//                visitUpdate.location.getOrElse(v.location),
+//                visitUpdate.user.getOrElse(v.user),
+//                visitUpdate.visitedAt.getOrElse(v.visitedAt),
+//                visitUpdate.mark.getOrElse(v.mark)
+//              )
+//
+//              DB.updateVisit(updatedVisit).onComplete {
+//                case Success(_) =>
+//                  to ! SuccessfulOperation
+//
+//                case Failure(ex) =>
+//                  to ! Error(ex.getMessage)
+//              }
+//          }
+//
+//        case Failure(ex) =>
+//          to ! Error(ex.getMessage)
+//      }
   }
 }

@@ -15,32 +15,34 @@ class UpdateLocationActor extends Actor with AppLogger {
     case UpdateLocation(id, locationUpdate) =>
       val to = sender()
 
-      DB.findLocationById(id).onComplete {
-        case Success(res) =>
-          res match {
-            case None =>
-              to ! NotExist(s"Location with id $id does not exist")
+      to ! SuccessfulOperation
 
-            case Some(l) =>
-              val updatedLocation = Location(
-                id,
-                locationUpdate.place.getOrElse(l.place),
-                locationUpdate.country.getOrElse(l.country),
-                locationUpdate.city.getOrElse(l.city),
-                locationUpdate.distance.getOrElse(l.distance)
-              )
-
-              DB.updateLocation(updatedLocation).onComplete {
-                case Success(_) =>
-                  to ! SuccessfulOperation
-
-                case Failure(ex) =>
-                  to ! Error(ex.getMessage)
-              }
-          }
-
-        case Failure(ex) =>
-          to ! Error(ex.getMessage)
-      }
+//      DB.findLocationById(id).onComplete {
+//        case Success(res) =>
+//          res match {
+//            case None =>
+//              to ! NotExist(s"Location with id $id does not exist")
+//
+//            case Some(l) =>
+//              val updatedLocation = Location(
+//                id,
+//                locationUpdate.place.getOrElse(l.place),
+//                locationUpdate.country.getOrElse(l.country),
+//                locationUpdate.city.getOrElse(l.city),
+//                locationUpdate.distance.getOrElse(l.distance)
+//              )
+//
+//              DB.updateLocation(updatedLocation).onComplete {
+//                case Success(_) =>
+//                  to ! SuccessfulOperation
+//
+//                case Failure(ex) =>
+//                  to ! Error(ex.getMessage)
+//              }
+//          }
+//
+//        case Failure(ex) =>
+//          to ! Error(ex.getMessage)
+//      }
   }
 }

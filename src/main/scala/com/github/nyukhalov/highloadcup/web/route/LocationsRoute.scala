@@ -16,7 +16,10 @@ trait LocationsRoute extends BaseRoute {
       post {
         decodeRequest {
           entity(as[Location]) {
-            location => createLocation { location }
+            location =>
+              createLocation {
+                location
+              }
           }
         }
       }
@@ -40,31 +43,23 @@ trait LocationsRoute extends BaseRoute {
 
   private val getLocationAvgMark =
     path("locations" / IntNumber / "avg") {
-      id => get {
-        complete("5")
-      }
+      id =>
+        get {
+          complete("5")
+        }
     }
 
   val locationsRoute: Route = getLocationRoute ~ getLocationAvgMark ~ createLocationRoute
 
-  def getLocationWithId(id: Int): Route = ctx => {
-    val p = Promise[RouteResult]
-    implicit val actorSystem = actorSys
-    perRequest(ctx, Props(classOf[GetLocationWithIdActor]), GetLocationWithId(id), p)
-    p.future
+  def getLocationWithId(id: Int): Route = {
+    handleRequest(Props[GetLocationWithIdActor], GetLocationWithId(id))
   }
 
-  def createLocation(location: Location): Route = ctx => {
-    val p = Promise[RouteResult]
-    implicit val actorSystem = actorSys
-    perRequest(ctx, Props(classOf[CreateLocationActor]), CreateLocation(location), p)
-    p.future
+  def createLocation(location: Location): Route = {
+    handleRequest(Props[CreateLocationActor], CreateLocation(location))
   }
 
-  def updateLocation(id: Int, locationUpdate: LocationUpdate): Route = ctx => {
-    val p = Promise[RouteResult]
-    implicit val actorSystem = actorSys
-    perRequest(ctx, Props(classOf[UpdateLocationActor]), UpdateLocation(id, locationUpdate), p)
-    p.future
+  def updateLocation(id: Int, locationUpdate: LocationUpdate): Route = {
+    handleRequest(Props[UpdateLocationActor], UpdateLocation(id, locationUpdate))
   }
 }

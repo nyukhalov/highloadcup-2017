@@ -40,24 +40,15 @@ trait VisitsRoute extends BaseRoute {
 
   val visitsRoute: Route = getVisitRoute ~ createVisitRoute
 
-  def getVisitWithId(id: Int): Route = ctx => {
-    val p = Promise[RouteResult]
-    implicit val actorSystem = actorSys
-    perRequest(ctx, Props(classOf[GetVisitWithIdActor]), GetVisitWithId(id), p)
-    p.future
+  def getVisitWithId(id: Int): Route = {
+    handleRequest(Props[GetVisitWithIdActor], GetVisitWithId(id))
   }
 
-  def createVisit(visit: Visit): Route = ctx => {
-    val p = Promise[RouteResult]
-    implicit val actorSystem = actorSys
-    perRequest(ctx, Props(classOf[CreateVisitActor]), CreateVisit(visit), p)
-    p.future
+  def createVisit(visit: Visit): Route = {
+    handleRequest(Props[CreateVisitActor], CreateVisit(visit))
   }
 
-  def updateVisit(id: Int, visitUpdate: VisitUpdate): Route = ctx => {
-    val p = Promise[RouteResult]
-    implicit val actorSystem = actorSys
-    perRequest(ctx, Props(classOf[UpdateVisitActor]), UpdateVisit(id, visitUpdate), p)
-    p.future
+  def updateVisit(id: Int, visitUpdate: VisitUpdate): Route = {
+    handleRequest(Props[UpdateVisitActor], UpdateVisit(id, visitUpdate))
   }
 }

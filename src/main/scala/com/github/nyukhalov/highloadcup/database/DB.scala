@@ -1,6 +1,7 @@
 package com.github.nyukhalov.highloadcup.database
 
 import com.github.nyukhalov.highloadcup.core.domain.{Location, User, Visit}
+import com.github.nyukhalov.highloadcup.web.domain.UserVisit
 import slick.jdbc.H2Profile.api._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -42,6 +43,29 @@ object DB {
     db.run(q.result).map(seq => {
       if (seq.isEmpty) 0f
       else seq.sum / seq.length.toFloat
+    })
+  }
+
+  def getUserVisits(id: Int, fromDate: Option[Long], toDate: Option[Long],
+                    country: Option[String], toDistance: Option[Int])
+                   (implicit ec: ExecutionContext): Future[List[UserVisit]] = {
+
+    var filteredVisits = visits.filter(_.userId === id)
+
+    fromDate.foreach(fd => filteredVisits = filteredVisits.filter(_.visitedAt > fd))
+    toDate.foreach(td => filteredVisits = filteredVisits.filter(_.visitedAt < td))
+
+    var joinRes = filteredVisits join locations on(_.locationId === _.id)
+
+    toDistance.foreach(d => joinRes = joinRes.filter(_._2.distance < d))
+    country.foreach(c => joinRes = joinRes.filter(_._2.country === c))
+
+    val q = for {
+      (v, l) <- joinRes
+    } yield (v.mark, v.visitedAt, l.place)
+
+    db.run(q.result).map(seq => seq.toList.map {
+      case (mark, visitedAt, place) => UserVisit(mark, visitedAt, place)
     })
   }
 

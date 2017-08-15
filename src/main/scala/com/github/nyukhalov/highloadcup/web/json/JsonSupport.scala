@@ -20,6 +20,8 @@ trait JsonSupport extends LowerCaseJsonProtocol with DomainJsonProtocol {
   }
 
   implicit val locAvgRating = jsonFormat1(LocAvgRating)
+  implicit val userVisitsFormat = jsonFormat3(UserVisit)
+  implicit val userVisitFormat = jsonFormat1(UserVisits)
 
   // rest messages (responses)
   implicit object UserWithIdFormat extends RootJsonFormat[UserWithId] {

@@ -19,8 +19,8 @@ class GetLocationAvgRatingActor extends Actor with AppLogger {
 
       val now = DateTime.now(DateTimeZone.UTC).withTimeAtStartOfDay()
 
-      val fromBirthDate = toAge.map(ta => now.minusYears(ta).getMillis * 1000)
-      val toBirthDate = fromAge.map(fa => now.minusYears(fa).getMillis * 1000)
+      val fromBirthDate = toAge.map(ta => now.minusYears(ta).getMillis / 1000)
+      val toBirthDate = fromAge.map(fa => now.minusYears(fa).getMillis / 1000)
 
       DB.findLocationById(id).onComplete {
         case Success(l) =>

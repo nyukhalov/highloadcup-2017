@@ -21,6 +21,7 @@ libraryDependencies ++= Seq(
   "com.github.pathikrit" %% "better-files" % "3.0.0",
   "com.typesafe.slick" %% "slick" % "3.2.1",
   "com.h2database" % "h2" % "1.4.187",
+  "joda-time" % "joda-time" % "2.9.9",
 
   "com.typesafe.akka" %% "akka-testkit" % "2.5.3" % Test,
   "com.typesafe.akka" %% "akka-stream-testkit" % "2.5.3" % Test,
@@ -43,7 +44,7 @@ dockerfile in docker := {
     from("java")
     copy(appDir, targetDir)
     expose(80)
-    entryPointRaw(s"$targetDir/bin/${executableScriptName.value} -J-Xms3g -J-Xmx3g -J-server")
+    entryPointRaw(s"$targetDir/bin/${executableScriptName.value} -J-Xms3584m -J-Xmx3584m -J-server")
 
 //    env("SPARK_BUILD", s"spark-${sparkVersion}-bin-hadoop2.4")
 //    runRaw("""wget http://d3kbcqa49mib13.cloudfront.net/$SPARK_BUILD.tgz && \

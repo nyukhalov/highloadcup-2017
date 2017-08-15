@@ -4,15 +4,12 @@ import akka.actor.Actor
 import com.github.nyukhalov.highloadcup.core.AppLogger
 import com.github.nyukhalov.highloadcup.database.DB
 import com.github.nyukhalov.highloadcup.web.domain._
+import org.joda.time.DateTime
 
 import scala.util.{Failure, Success}
 
 class GetLocationAvgRatingActor extends Actor with AppLogger {
   implicit val ec = context.dispatcher
-
-  private val AGE_TO_SEC_FACTOR = 365 * 24 * 60 * 60
-
-  private def ageToSec(age: Int): Long = age * AGE_TO_SEC_FACTOR
 
   override def receive: Receive = {
     case GetLocAvgRating(id, fromDate, toDate, fromAge, toAge, gender) =>
@@ -20,9 +17,10 @@ class GetLocationAvgRatingActor extends Actor with AppLogger {
 
       logger.debug(s"Params: id=$id, fromDate=$fromDate, toDate=$toDate, fromAge=$fromAge, toAge=$toAge, gender=$gender")
 
-      val nowSec = System.currentTimeMillis() * 1000
-      val fromBirthDate = toAge.map(ta => nowSec - ageToSec(ta))
-      val toBirthDate = fromAge.map(fa => nowSec - ageToSec(fa))
+      val now = DateTime.now()
+
+      val fromBirthDate = toAge.map(ta => now.minusYears(ta).getMillis * 1000)
+      val toBirthDate = fromAge.map(fa => now.minusYears(fa).getMillis * 1000)
 
       DB.findLocationById(id).onComplete {
         case Success(l) =>

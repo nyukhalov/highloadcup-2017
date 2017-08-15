@@ -18,7 +18,7 @@ class GetUserVisitsActor extends Actor with AppLogger {
         case Success(_) =>
           DB.getUserVisits(id, fromDate, toDate, country, toDistance).onComplete {
             case Success(visits) =>
-              to ! UserVisits(visits)
+              to ! UserVisits(visits.sortBy(_.visitedAt))
 
             case Failure(ex) =>
               to ! Error(ex.getMessage)

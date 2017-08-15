@@ -1,46 +1,60 @@
 package com.github.nyukhalov.highloadcup.web.actor
 
 import akka.actor.Actor
-import com.github.nyukhalov.highloadcup.core.domain.User
+import com.github.nyukhalov.highloadcup.core.domain.{User, UserV}
 import com.github.nyukhalov.highloadcup.database.DB
-import com.github.nyukhalov.highloadcup.web.domain.{Error, NotExist, SuccessfulOperation, UpdateUser}
+import com.github.nyukhalov.highloadcup.web.domain._
 
 import scala.util.{Failure, Success}
 
 class UpdateUserActor() extends Actor {
   implicit val ec = context.dispatcher
 
+  private def isValidUpdate(uu: UserUpdate) = {
+    if (uu.email.isDefined && !UserV.isValidEmail(uu.email.get)) false
+    else if (uu.firstName.isDefined && !UserV.isValidName(uu.firstName.get)) false
+    else if (uu.lastName.isDefined && !UserV.isValidName(uu.lastName.get)) false
+    else if (uu.gender.isDefined && !UserV.isValidGender(uu.gender.get)) false
+    else if (uu.birthDate.isDefined && !UserV.isValidBirthDate(uu.birthDate.get)) false
+    else true
+  }
+
   override def receive: Receive = {
     case UpdateUser(id, userUpdate) =>
       val to = sender()
 
-      DB.findUserById(id).onComplete {
-        case Success(res) =>
-          res match {
-            case None =>
-              to ! NotExist(s"User with id $id does not exist")
+      if (!isValidUpdate(userUpdate)) {
+        to ! Validation("Invalid user update")
+      } else {
 
-            case Some(u) =>
-              val updatedUser = User(
-                id,
-                userUpdate.email.getOrElse(u.email),
-                userUpdate.firstName.getOrElse(u.firstName),
-                userUpdate.lastName.getOrElse(u.lastName),
-                userUpdate.gender.getOrElse(u.gender),
-                userUpdate.birthDate.getOrElse(u.birthDate)
-              )
+        DB.findUserById(id).onComplete {
+          case Success(res) =>
+            res match {
+              case None =>
+                to ! NotExist(s"User with id $id does not exist")
 
-              DB.updateUser(updatedUser).onComplete {
-                case Success(_) =>
-                  to ! SuccessfulOperation
+              case Some(u) =>
+                val updatedUser = User(
+                  id,
+                  userUpdate.email.getOrElse(u.email),
+                  userUpdate.firstName.getOrElse(u.firstName),
+                  userUpdate.lastName.getOrElse(u.lastName),
+                  userUpdate.gender.getOrElse(u.gender),
+                  userUpdate.birthDate.getOrElse(u.birthDate)
+                )
 
-                case Failure(ex) =>
-                  to ! Error(ex.getMessage)
-              }
-          }
+                DB.updateUser(updatedUser).onComplete {
+                  case Success(_) =>
+                    to ! SuccessfulOperation
 
-        case Failure(ex) =>
-          to ! Error(ex.getMessage)
+                  case Failure(ex) =>
+                    to ! Error(ex.getMessage)
+                }
+            }
+
+          case Failure(ex) =>
+            to ! Error(ex.getMessage)
+        }
       }
   }
 }

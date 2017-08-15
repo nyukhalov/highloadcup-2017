@@ -1,6 +1,8 @@
 package com.github.nyukhalov.highloadcup.web
 
 import akka.actor.ActorSystem
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.model.HttpRequest
 import akka.stream.Materializer
 import com.github.nyukhalov.highloadcup.core.actor.DataLoaderActor
 import com.github.nyukhalov.highloadcup.core.actor.DataLoaderActor.LoadData
@@ -21,6 +23,13 @@ object WebBoot {
       case Success(_) =>
         actorSystem.actorOf(DataLoaderActor.props(), "data-loader") ! LoadData(pathToZip)
         new WebServer(serverPort).start()
+
+        val http = Http()
+        http.singleRequest(HttpRequest(uri = s"http://localhost:$serverPort/users/1"))
+        http.singleRequest(HttpRequest(uri = s"http://localhost:$serverPort/locations/1"))
+        http.singleRequest(HttpRequest(uri = s"http://localhost:$serverPort/visits/1"))
+        http.singleRequest(HttpRequest(uri = s"http://localhost:$serverPort/users/1/visits"))
+        http.singleRequest(HttpRequest(uri = s"http://localhost:$serverPort/locations/1/avg"))
 
       case Failure(ex) => throw new RuntimeException("Failed to init database")
     }

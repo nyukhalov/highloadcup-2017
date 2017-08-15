@@ -41,35 +41,42 @@ class DataLoaderActor() extends Actor with AppLogger with DomainJsonProtocol {
 
     val entity2loadPriority = Map("users" -> 1, "locations" -> 2, "visits" -> 3)
 
+    var usersLoaded = 0
+    var locationsLoaded = 0
+    var visitsLoaded = 0
+
     workdir.children.toList.map(x => {
       val entityName = x.name.split("_")(0)
       (x, entity2loadPriority(entityName))
     }).sortBy(_._2).foreach { case (f, _) =>
-      logger.info(s"Read file: $f")
+      logger.debug(s"Read file: $f")
 
       val content = f.contentAsString(charset = Charset.forName("UTF-8"))
 
       f.name.split("_")(0) match {
         case "users" =>
           val users = content.parseJson.convertTo[Users]
+          usersLoaded += users.users.length
           val f = DB.insertUsers(users.users)
           wait(f)
 
         case "locations" =>
           val locations = content.parseJson.convertTo[Locations]
+          locationsLoaded += locations.locations.length
           val f = DB.insertLocations(locations.locations)
           wait(f)
 
 
         case "visits" =>
           val visits = content.parseJson.convertTo[Visits]
+          visitsLoaded += visits.visits.length
           val f = DB.insertVisits(visits.visits)
           wait(f)
 
         case t => logger.error(s"Unknown type of data: $t")
       }
     }
-    logger.info("Data loaded successfully")
+    logger.info(s"Data loaded successfully: users=$usersLoaded, locations=$locationsLoaded, visits=$visitsLoaded")
   }
 
   private def wait[T](future: Future[T]) = {

@@ -1,7 +1,6 @@
 package com.github.nyukhalov.highloadcup.database
 
 import com.github.nyukhalov.highloadcup.core.domain.{Location, User, Visit}
-import com.github.nyukhalov.highloadcup.web.domain.UserUpdate
 import slick.jdbc.H2Profile.api._
 
 import scala.concurrent.{ExecutionContext, Future}

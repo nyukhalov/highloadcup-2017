@@ -41,9 +41,9 @@ dockerfile in docker := {
 
   new Dockerfile {
     from("java")
-    entryPoint(s"$targetDir/bin/${executableScriptName.value}")
     copy(appDir, targetDir)
     expose(80)
+    entryPointRaw(s"$targetDir/bin/${executableScriptName.value} -J-Xms3g -J-Xmx3g -J-server")
 
 //    env("SPARK_BUILD", s"spark-${sparkVersion}-bin-hadoop2.4")
 //    runRaw("""wget http://d3kbcqa49mib13.cloudfront.net/$SPARK_BUILD.tgz && \

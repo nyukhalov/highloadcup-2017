@@ -32,6 +32,7 @@ trait PerRequest extends Actor with JsonSupport with AppLogger {
     case res: UserWithId => complete(OK, res)
     case res: VisitWithId => complete(OK, res)
     case res: LocationWithId => complete(OK, res)
+    case avg: LocAvgRating => complete(OK, avg)
 
     case SuccessfulOperation => complete(OK, "{}".parseJson)
     case ne: NotExist => complete(NotFound, ne)

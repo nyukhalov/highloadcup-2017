@@ -31,6 +31,10 @@ final case class CreateLocation(location: Location) extends RestRequest
 // get location by id
 final case class GetLocationWithId(id: Int) extends RestRequest
 final case class LocationWithId(location: Location) extends RestMessage
+// other
+final case class GetLocAvgRating(id: Int, fromDate: Option[Long], toDate: Option[Long],
+                                 fromAge: Option[Int], toAge: Option[Int], gender: Option[String]) extends RestRequest
+final case class LocAvgRating(avg: Float)
 
 
 // model

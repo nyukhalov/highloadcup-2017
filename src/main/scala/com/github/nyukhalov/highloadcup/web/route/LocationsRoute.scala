@@ -5,8 +5,8 @@ import akka.http.scaladsl.server.Directives.{complete, get, path}
 import akka.http.scaladsl.server.{Route, RouteResult}
 import akka.http.scaladsl.server.Directives._
 import com.github.nyukhalov.highloadcup.core.domain.Location
-import com.github.nyukhalov.highloadcup.web.actor.{CreateLocationActor, GetLocationWithIdActor, UpdateLocationActor}
-import com.github.nyukhalov.highloadcup.web.domain.{CreateLocation, GetLocationWithId, LocationUpdate, UpdateLocation}
+import com.github.nyukhalov.highloadcup.web.actor.{CreateLocationActor, GetLocationAvgRatingActor, GetLocationWithIdActor, UpdateLocationActor}
+import com.github.nyukhalov.highloadcup.web.domain._
 
 import scala.concurrent.Promise
 
@@ -45,7 +45,10 @@ trait LocationsRoute extends BaseRoute {
     path("locations" / IntNumber / "avg") {
       id =>
         get {
-          complete("5")
+          parameters('fromDate.as[Long] ?, 'toDate.as[Long] ?, 'fromAge.as[Int] ?, 'toAge.as[Int] ?, 'gender.as[String] ?) {
+            (fromDate, toDate, fromAge, toAge, gender) =>
+              getAvarageRating(id, fromDate, toDate, fromAge, toAge, gender)
+          }
         }
     }
 
@@ -61,5 +64,9 @@ trait LocationsRoute extends BaseRoute {
 
   def updateLocation(id: Int, locationUpdate: LocationUpdate): Route = {
     handleRequest(Props[UpdateLocationActor], UpdateLocation(id, locationUpdate))
+  }
+
+  def getAvarageRating(id: Int, fromDate: Option[Long], toDate: Option[Long], fromAge: Option[Int], toAge: Option[Int], gender: Option[String]): Route = {
+    handleRequest(Props[GetLocationAvgRatingActor], GetLocAvgRating(id, fromDate, toDate, fromAge, toAge, gender))
   }
 }

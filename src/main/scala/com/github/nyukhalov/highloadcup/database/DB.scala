@@ -7,14 +7,42 @@ import scala.concurrent.{ExecutionContext, Future}
 
 object DB {
   import Tables.users
+
   import Tables.locations
   import Tables.visits
-
   val db: Database = Database.forConfig("h2mem1")
 
   def init(): Future[Unit] = {
     val setup = (users.schema ++ locations.schema ++ visits.schema).create
     db.run(setup)
+  }
+
+  def getLocAvgRating(id: Int,
+                      fromDate: Option[Long],
+                      toDate: Option[Long],
+                      fromBirthDate: Option[Long],
+                      toBirthDate: Option[Long],
+                      gender: Option[String])
+                     (implicit ec: ExecutionContext): Future[Float] = {
+    var filteredVisits = visits.filter(_.locationId === id)
+
+    fromDate.foreach(from => filteredVisits = filteredVisits.filter(_.visitedAt > from))
+    toDate.foreach(to => filteredVisits = filteredVisits.filter(_.visitedAt < to))
+
+    var joinRes = filteredVisits join users on(_.userId === _.id)
+
+    fromBirthDate.foreach(from => joinRes = joinRes.filter(_._2.birthDate > from))
+    toBirthDate.foreach(to => joinRes = joinRes.filter(_._2.birthDate < to))
+    gender.foreach(g => joinRes = joinRes.filter(_._2.gender === g))
+
+    val q = for {
+      (v, _) <- joinRes
+    } yield v.mark
+
+    db.run(q.result).map(seq => {
+      if (seq.isEmpty) 0f
+      else seq.sum / seq.length.toFloat
+    })
   }
 
   // users

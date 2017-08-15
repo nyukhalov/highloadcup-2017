@@ -1,7 +1,7 @@
 package com.github.nyukhalov.highloadcup.web.json
 
 import com.github.nyukhalov.highloadcup.core.json.{DomainJsonProtocol, LowerCaseJsonProtocol}
-import spray.json.{DefaultJsonProtocol, JsValue, JsonWriter, RootJsonFormat}
+import spray.json.{DefaultJsonProtocol, JsNumber, JsValue, JsonFormat, JsonWriter, RootJsonFormat}
 import com.github.nyukhalov.highloadcup.web.domain._
 
 trait JsonSupport extends LowerCaseJsonProtocol with DomainJsonProtocol {
@@ -13,6 +13,13 @@ trait JsonSupport extends LowerCaseJsonProtocol with DomainJsonProtocol {
   implicit val userUpdateFormat = jsonFormat5(UserUpdate)
   implicit val visitUpdateFormat = jsonFormat4(VisitUpdate)
   implicit val locationUpdateFormat = jsonFormat4(LocationUpdate)
+
+  implicit object MyFloatJsonFormat extends JsonFormat[Float] {
+    def write(x: Float): JsValue = JsNumber(BigDecimal(x).setScale(5, BigDecimal.RoundingMode.HALF_UP))
+    def read(value: JsValue): Float = DefaultJsonProtocol.FloatJsonFormat.read(value)
+  }
+
+  implicit val locAvgRating = jsonFormat1(LocAvgRating)
 
   // rest messages (responses)
   implicit object UserWithIdFormat extends RootJsonFormat[UserWithId] {

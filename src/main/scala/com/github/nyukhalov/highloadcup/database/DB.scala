@@ -29,8 +29,9 @@ object DB {
   }
 
   def updateUser(user: User): Future[Int] = {
-    val r = users.update(user)
-    db.run(r)
+    val q = for { u <- users if u.id === user.id } yield (u.email, u.firstName, u.lastName, u.gender, u.birthDate)
+    val updateAction = q.update(user.email, user.firstName, user.lastName, user.gender, user.birthDate)
+    db.run(updateAction)
   }
 
   def findUserById(id: Int)(implicit ec: ExecutionContext): Future[Option[User]] = {
@@ -50,8 +51,9 @@ object DB {
   }
 
   def updateLocation(location: Location): Future[Int] = {
-    val r = locations.update(location)
-    db.run(r)
+    val q = for { l <- locations if l.id === location.id } yield (l.place, l.country, l.city, l.distance)
+    val updateAction = q.update(location.place, location.country, location.city, location.distance)
+    db.run(updateAction)
   }
 
   def findLocationById(id: Int)(implicit ec: ExecutionContext): Future[Option[Location]] = {
@@ -71,8 +73,9 @@ object DB {
   }
 
   def updateVisit(visit: Visit): Future[Int] = {
-    val r = visits.update(visit)
-    db.run(r)
+    val q = for { v <- visits if v.id === visit.id } yield (v.locationId, v.userId, v.visitedAt, v.mark)
+    val updateAction = q.update(visit.location, visit.user, visit.visitedAt, visit.mark)
+    db.run(updateAction)
   }
 
   def findVisitById(id: Int)(implicit ec: ExecutionContext): Future[Option[Visit]] = {

@@ -20,27 +20,28 @@ class CreateVisitActor extends Actor with AppLogger {
       } else {
 
         DB.findVisitById(visit.id).onComplete {
-          case Success(res) =>
-            res match {
-              case Some(_) =>
-                to ! Validation(s"Visit with id ${visit.id} already exists")
+          case Failure(ex) => to ! Error(ex.getMessage)
+          case Success(Some(_)) => to ! Validation(s"Visit with id ${visit.id} already exists")
 
-              case None =>
-                DB.insertVisit(visit).onComplete {
-                  case Success(_) =>
-                    to ! SuccessfulOperation
+          case Success(None) =>
 
-                  case Failure(ex) =>
-                    val msg = s"Failed when save new visit $visit: ${ex.getMessage}"
-                    logger.error(msg, ex)
-                    to ! Error(msg)
+            DB.findUserById(visit.user).onComplete {
+              case Failure(ex) => to ! Error(ex.getMessage)
+              case Success(None) => to ! Validation(s"User with id ${visit.user} does not exist")
+
+              case Success(Some(_)) =>
+
+                DB.findLocationById(visit.location).onComplete {
+                  case Failure(ex) => to ! Error(ex.getMessage)
+                  case Success(None) => to ! Validation(s"Location with id ${visit.location} does not exist")
+
+                  case Success(Some(_)) =>
+                    DB.insertVisit(visit).onComplete {
+                      case Success(_) => to ! SuccessfulOperation
+                      case Failure(ex) => to ! Error(ex.getMessage)
+                    }
                 }
             }
-
-          case Failure(ex) =>
-            val msg = s"Failed when find visit with id ${visit.id}: ${ex.getMessage}"
-            logger.error(msg, ex)
-            to ! Error(msg)
         }
       }
   }

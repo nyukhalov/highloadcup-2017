@@ -41,8 +41,15 @@ dockerfile in docker := {
   val targetDir = "/app"
 
   new Dockerfile {
-    from("java")
+    from("frolvlad/alpine-oraclejdk8")
     copy(appDir, targetDir)
+
+    runRaw(
+      """apk update && \
+         apk upgrade && \
+         apk add bash
+      """)
+
     expose(80)
     entryPointRaw(s"$targetDir/bin/${executableScriptName.value} -J-Xms3584m -J-Xmx3584m -J-server")
 

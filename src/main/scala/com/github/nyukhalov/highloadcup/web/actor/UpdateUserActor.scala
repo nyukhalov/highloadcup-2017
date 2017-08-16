@@ -8,7 +8,7 @@ import com.github.nyukhalov.highloadcup.web.domain._
 import scala.util.{Failure, Success}
 
 class UpdateUserActor() extends Actor {
-  implicit val ec = context.dispatcher
+  import scala.concurrent.ExecutionContext.Implicits.global
 
   private def isValidUpdate(uu: UserUpdate) = {
     if (uu.email.isDefined && !UserV.isValidEmail(uu.email.get)) false

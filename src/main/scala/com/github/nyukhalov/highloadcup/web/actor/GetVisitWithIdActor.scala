@@ -8,7 +8,7 @@ import com.github.nyukhalov.highloadcup.web.domain._
 import scala.util.{Failure, Success}
 
 class GetVisitWithIdActor() extends Actor with AppLogger {
-  implicit val ec = context.dispatcher
+  import scala.concurrent.ExecutionContext.Implicits.global
 
   override def receive: Receive = {
     case GetVisitWithId(id) =>

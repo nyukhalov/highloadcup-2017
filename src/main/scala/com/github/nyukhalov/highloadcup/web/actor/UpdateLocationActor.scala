@@ -9,7 +9,7 @@ import com.github.nyukhalov.highloadcup.web.domain._
 import scala.util.{Failure, Success}
 
 class UpdateLocationActor extends Actor with AppLogger {
-  implicit val ec = context.dispatcher
+  import scala.concurrent.ExecutionContext.Implicits.global
 
   private def isValidUpdate(lu: LocationUpdate) = {
     if (lu.place.isDefined && !LocationV.isValidPlace(lu.place.get)) false

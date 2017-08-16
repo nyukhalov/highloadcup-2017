@@ -8,7 +8,7 @@ import com.github.nyukhalov.highloadcup.web.domain.{Error, GetUserVisits, NotExi
 import scala.util.{Failure, Success}
 
 class GetUserVisitsActor extends Actor with AppLogger {
-  implicit val ec = context.dispatcher
+  import scala.concurrent.ExecutionContext.Implicits.global
 
   override def receive: Receive = {
     case GetUserVisits(id, fromDate, toDate, country, toDistance) =>

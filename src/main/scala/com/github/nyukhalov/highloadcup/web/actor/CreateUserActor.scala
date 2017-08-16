@@ -9,7 +9,7 @@ import com.github.nyukhalov.highloadcup.web.domain.{CreateUser, Error, Successfu
 import scala.util.{Failure, Success}
 
 class CreateUserActor extends Actor with AppLogger {
-  implicit val ec = context.dispatcher
+  import scala.concurrent.ExecutionContext.Implicits.global
 
   override def receive: Receive = {
     case CreateUser(user) =>

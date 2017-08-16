@@ -10,7 +10,7 @@ import org.joda.time.{DateTime, DateTimeZone}
 import scala.util.{Failure, Success}
 
 class GetLocationAvgRatingActor extends Actor with AppLogger {
-  implicit val ec = context.dispatcher
+  import scala.concurrent.ExecutionContext.Implicits.global
 
   private def isValidParams(fromDate: Option[Long], toDate: Option[Long],
                             fromAge: Option[Int], toAge: Option[Int], gender: Option[String]): Boolean = {

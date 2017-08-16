@@ -9,7 +9,7 @@ import com.github.nyukhalov.highloadcup.web.domain._
 import scala.util.{Failure, Success}
 
 class UpdateVisitActor extends Actor with AppLogger {
-  implicit val ec = context.dispatcher
+  import scala.concurrent.ExecutionContext.Implicits.global
 
   private def isValidUpdate(vu: VisitUpdate) = {
     if (vu.mark.isDefined && !VisitV.isValidMark(vu.mark.get)) false

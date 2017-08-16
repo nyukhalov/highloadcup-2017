@@ -1,12 +1,13 @@
 package com.github.nyukhalov.highloadcup.database
 
+import com.github.nyukhalov.highloadcup.core.AppLogger
 import com.github.nyukhalov.highloadcup.core.domain.{Location, User, Visit}
 import com.github.nyukhalov.highloadcup.web.domain.UserVisit
 import slick.jdbc.H2Profile.api._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-object DB {
+object DB extends AppLogger {
   import Tables.users
 
   import Tables.locations
@@ -14,6 +15,16 @@ object DB {
   val db: Database = Database.forConfig("h2mem1")
 
   def init(): Future[Unit] = {
+
+    logger.info("Users schema:")
+    users.schema.createStatements.foreach(x => logger.info(x))
+
+    logger.info("Locations schema:")
+    locations.schema.createStatements.foreach(x => logger.info(x))
+
+    logger.info("Visits schema:")
+    visits.schema.createStatements.foreach(x => logger.info(x))
+
     val setup = (users.schema ++ locations.schema ++ visits.schema).create
     db.run(setup)
   }
@@ -25,22 +36,35 @@ object DB {
                       toBirthDate: Option[Long],
                       gender: Option[String])
                      (implicit ec: ExecutionContext): Future[Float] = {
-    var filteredVisits = visits.filter(_.locationId === id)
 
-    fromDate.foreach(from => filteredVisits = filteredVisits.filter(_.visitedAt > from))
-    toDate.foreach(to => filteredVisits = filteredVisits.filter(_.visitedAt < to))
+    def getAdditionalSqlCondition(fromDate: Option[Long], toDate: Option[Long],
+                                  fromBirthDate: Option[Long], toBirthDate: Option[Long],
+                                  gender: Option[String]): String = {
+      var res = ""
 
-    var joinRes = filteredVisits join users on(_.userId === _.id)
+      fromDate.foreach(from => res += s"v.VISITED_AT > $from ")
+      toDate.foreach(to => res += s"v.VISITED_AT < $to ")
 
-    fromBirthDate.foreach(from => joinRes = joinRes.filter(_._2.birthDate >= from))
-    toBirthDate.foreach(to => joinRes = joinRes.filter(_._2.birthDate < to))
-    gender.foreach(g => joinRes = joinRes.filter(_._2.gender === g))
+      fromBirthDate.foreach(from => res += s"u.BIRTH_DATE >= $from ")
+      toBirthDate.foreach(to => res += s"u.BIRTH_DATE < $to ")
+      gender.foreach(g => res += s"u.GENDER = '$g' ")
 
-    val q = for {
-      (v, _) <- joinRes
-    } yield v.mark
+      if (res.nonEmpty) res = "AND " + res
 
-    db.run(q.result).map(seq => {
+      res
+    }
+
+    val sqlCondition = getAdditionalSqlCondition(fromDate, toDate, fromBirthDate, toBirthDate, gender)
+
+    val selectAction =
+      sql"""
+         SELECT v.MARK
+         FROM VISITS v INNER JOIN USERS u ON (v.USER_ID = u.ID)
+         WHERE
+           v.LOC_ID = $id #$sqlCondition
+       """.as[Int]
+
+    db.run(selectAction).map(seq => {
       if (seq.isEmpty) 0f
       else seq.sum / seq.length.toFloat
     })
@@ -60,11 +84,16 @@ object DB {
     toDistance.foreach(d => joinRes = joinRes.filter(_._2.distance < d))
     country.foreach(c => joinRes = joinRes.filter(_._2.country === c))
 
-    val q = for {
+    val q1 = for {
       (v, l) <- joinRes
     } yield (v.mark, v.visitedAt, l.place)
 
-    db.run(q.result).map(seq => seq.toList.map {
+    val q = q1.result
+
+    logger.info("user visits SQL:")
+    q.statements.foreach(logger.info(_))
+
+    db.run(q).map(seq => seq.toList.map {
       case (mark, visitedAt, place) => UserVisit(mark, visitedAt, place)
     })
   }

@@ -13,6 +13,9 @@ object Tables {
     def birthDate = column[Long]("BIRTH_DATE")
 
     override def * = (id, email, firstName, lastName, gender, birthDate) <> (User.tupled, User.unapply)
+
+    def genderIdx = index("idx_gender", gender)
+    def birthDateIdx = index("idx_bd", birthDate)
   }
   val users: TableQuery[Users] = TableQuery[Users]
 
@@ -24,6 +27,8 @@ object Tables {
     def distance = column[Int]("DISTANCE")
 
     override def * = (id, place, country, city, distance) <> (Location.tupled, Location.unapply)
+
+    def distanceIdx = index("idx_distance", distance)
   }
   val locations: TableQuery[Locations] = TableQuery[Locations]
 
@@ -38,6 +43,8 @@ object Tables {
 
     def location = foreignKey("LOC_FK", locationId, locations)(_.id)
     def user = foreignKey("USER_FK", userId, users)(_.id)
+
+    def visitedAtIdx = index("idx_visited_at", visitedAt)
   }
   val visits: TableQuery[Visits] = TableQuery[Visits]
 }

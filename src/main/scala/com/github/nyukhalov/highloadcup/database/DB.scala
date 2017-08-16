@@ -42,14 +42,12 @@ object DB extends AppLogger {
                                   gender: Option[String]): String = {
       var res = ""
 
-      fromDate.foreach(from => res += s"v.VISITED_AT > $from ")
-      toDate.foreach(to => res += s"v.VISITED_AT < $to ")
+      fromDate.foreach(from => res += s"AND v.VISITED_AT > $from ")
+      toDate.foreach(to => res += s"AND v.VISITED_AT < $to ")
 
-      fromBirthDate.foreach(from => res += s"u.BIRTH_DATE >= $from ")
-      toBirthDate.foreach(to => res += s"u.BIRTH_DATE < $to ")
-      gender.foreach(g => res += s"u.GENDER = '$g' ")
-
-      if (res.nonEmpty) res = "AND " + res
+      fromBirthDate.foreach(from => res += s"AND u.BIRTH_DATE >= $from ")
+      toBirthDate.foreach(to => res += s"AND u.BIRTH_DATE < $to ")
+      gender.foreach(g => res += s"AND u.GENDER = '$g' ")
 
       res
     }
@@ -90,8 +88,8 @@ object DB extends AppLogger {
 
     val q = q1.result
 
-    logger.info("user visits SQL:")
-    q.statements.foreach(logger.info(_))
+//    logger.info("user visits SQL:")
+//    q.statements.foreach(logger.info(_))
 
     db.run(q).map(seq => seq.toList.map {
       case (mark, visitedAt, place) => UserVisit(mark, visitedAt, place)

@@ -29,6 +29,7 @@ object Tables {
     override def * = (id, place, country, city, distance) <> (Location.tupled, Location.unapply)
 
     def distanceIdx = index("idx_distance", distance)
+    def countryIdx = index("idx_country", country)
   }
   val locations: TableQuery[Locations] = TableQuery[Locations]
 

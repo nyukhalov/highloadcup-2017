@@ -72,26 +72,29 @@ object DB extends AppLogger {
                     country: Option[String], toDistance: Option[Int])
                    (implicit ec: ExecutionContext): Future[List[UserVisit]] = {
 
-    var filteredVisits = visits.filter(_.userId === id)
+    def getSqlCondition(fromDate: Option[Long], toDate: Option[Long],
+                        country: Option[String], toDistance: Option[Int]) = {
+      var res = ""
 
-    fromDate.foreach(fd => filteredVisits = filteredVisits.filter(_.visitedAt > fd))
-    toDate.foreach(td => filteredVisits = filteredVisits.filter(_.visitedAt < td))
+      fromDate.foreach(from => res += s"AND v.VISITED_AT > $from")
+      toDate.foreach(to => res += s"AND v.VISITED_AT < $to")
+      country.foreach(c => res += s"AND l.COUNTRY = '$c'")
+      toDistance.foreach(d => res += s"AND l.DISTANCE < $d")
 
-    var joinRes = filteredVisits join locations on(_.locationId === _.id)
+      res
+    }
 
-    toDistance.foreach(d => joinRes = joinRes.filter(_._2.distance < d))
-    country.foreach(c => joinRes = joinRes.filter(_._2.country === c))
+    val sqlCondition = getSqlCondition(fromDate, toDate, country, toDistance)
 
-    val q1 = for {
-      (v, l) <- joinRes
-    } yield (v.mark, v.visitedAt, l.place)
+    val selectAction =
+      sql"""
+           SELECT v.MARK, v.VISITED_AT, l.PLACE
+           FROM VISITS v INNER JOIN LOCATIONS l ON(v.LOC_ID = l.ID)
+           WHERE
+             v.USER_ID = $id #$sqlCondition
+         """.as[(Int, Long, String)]
 
-    val q = q1.result
-
-//    logger.info("user visits SQL:")
-//    q.statements.foreach(logger.info(_))
-
-    db.run(q).map(seq => seq.toList.map {
+    db.run(selectAction).map(seq => seq.toList.map {
       case (mark, visitedAt, place) => UserVisit(mark, visitedAt, place)
     })
   }

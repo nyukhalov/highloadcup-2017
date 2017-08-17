@@ -4,7 +4,7 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpRequest
 import akka.stream.Materializer
-import com.github.nyukhalov.highloadcup.core.AppLogger
+import com.github.nyukhalov.highloadcup.core.{AppLogger, HLServiceImpl}
 import com.github.nyukhalov.highloadcup.core.actor.DataLoaderActor
 import com.github.nyukhalov.highloadcup.core.actor.DataLoaderActor.LoadData
 import com.github.nyukhalov.highloadcup.database.DB
@@ -22,8 +22,9 @@ object WebBoot extends AppLogger {
 
     DB.init().onComplete {
       case Success(_) =>
-        actorSystem.actorOf(DataLoaderActor.props(), "data-loader") ! LoadData(pathToZip)
-        new WebServer(serverPort).start()
+        val hlService = new HLServiceImpl()
+        actorSystem.actorOf(DataLoaderActor.props(hlService), "data-loader") ! LoadData(pathToZip)
+        new WebServer(serverPort, hlService).start()
 
         val http = Http()
         http.singleRequest(HttpRequest(uri = s"http://localhost:$serverPort/users/1"))

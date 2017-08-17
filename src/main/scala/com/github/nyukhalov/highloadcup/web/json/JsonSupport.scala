@@ -22,10 +22,6 @@ trait JsonSupport extends LowerCaseJsonProtocol with DomainJsonProtocol {
 
   override implicit def optionFormat[T: JsonFormat]: JsonFormat[Option[T]] = new MyOptionJsonFormat[T]
 
-  implicit val errorFormat = jsonFormat1(Error)
-  implicit val validationFormat = jsonFormat1(Validation)
-
-  implicit val notExistFormat = jsonFormat1(NotExist)
   implicit val userUpdateFormat = jsonFormat5(UserUpdate)
   implicit val visitUpdateFormat = jsonFormat4(VisitUpdate)
 

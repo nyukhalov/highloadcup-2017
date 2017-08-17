@@ -18,7 +18,6 @@ final case class UserVisit(mark: Int, visitedAt: Long, place: String)
 
 // model
 object SuccessfulOperation
-final case class Validation(msg: String)
-final case class Error(msg: String)
-final case class NotExist(msg: String)
+object Validation
+object NotExist
 

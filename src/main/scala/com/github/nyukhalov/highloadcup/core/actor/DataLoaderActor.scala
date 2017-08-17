@@ -3,24 +3,23 @@ package com.github.nyukhalov.highloadcup.core.actor
 import java.nio.charset.Charset
 
 import akka.actor.{Actor, Props}
-import com.github.nyukhalov.highloadcup.core.AppLogger
+import com.github.nyukhalov.highloadcup.core.{AppLogger, HLService}
 import better.files._
 import com.github.nyukhalov.highloadcup.core.domain._
 import com.github.nyukhalov.highloadcup.core.json.DomainJsonProtocol
-import com.github.nyukhalov.highloadcup.database.DB
 import spray.json._
-import scala.concurrent.duration._
 
+import scala.concurrent.duration._
 import scala.concurrent.{Await, Future, duration}
 
 object DataLoaderActor {
 
   final case class LoadData(pathToZip: String)
 
-  def props(): Props = Props(classOf[DataLoaderActor])
+  def props(hLService: HLService): Props = Props(classOf[DataLoaderActor], hLService)
 }
 
-class DataLoaderActor() extends Actor with AppLogger with DomainJsonProtocol {
+class DataLoaderActor(hlService: HLService) extends Actor with AppLogger with DomainJsonProtocol {
 
   import DataLoaderActor._
 
@@ -57,20 +56,20 @@ class DataLoaderActor() extends Actor with AppLogger with DomainJsonProtocol {
         case "users" =>
           val users = content.parseJson.convertTo[Users]
           usersLoaded += users.users.length
-          val f = DB.insertUsers(users.users)
+          val f = hlService.addUsers(users.users)
           wait(f)
 
         case "locations" =>
           val locations = content.parseJson.convertTo[Locations]
           locationsLoaded += locations.locations.length
-          val f = DB.insertLocations(locations.locations)
+          val f = hlService.addLocations(locations.locations)
           wait(f)
 
 
         case "visits" =>
           val visits = content.parseJson.convertTo[Visits]
           visitsLoaded += visits.visits.length
-          val f = DB.insertVisits(visits.visits)
+          val f = hlService.addVisits(visits.visits)
           wait(f)
 
         case t => logger.error(s"Unknown type of data: $t")

@@ -11,8 +11,6 @@ import com.github.nyukhalov.highloadcup.core.domain.User
 import com.github.nyukhalov.highloadcup.web.json.JsonSupport
 import org.specs2.mock.Mockito
 import org.mockito.ArgumentMatchers.{eq => meq, _}
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import spray.json.DefaultJsonProtocol._
 
 class UsersRouteSpecification extends Specification with Specs2RouteTest with Mockito with JsonSupport {
   implicit val actorSystem = ActorSystem("test")

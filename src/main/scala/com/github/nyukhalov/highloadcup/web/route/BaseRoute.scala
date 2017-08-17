@@ -7,10 +7,10 @@ import com.github.nyukhalov.highloadcup.core.{AppLogger, HLService}
 import com.github.nyukhalov.highloadcup.core.domain.{Location, User, Visit}
 import com.github.nyukhalov.highloadcup.web.domain.{LocAvgRating, NotExist, SuccessfulOperation, UserVisits, Validation}
 import com.github.nyukhalov.highloadcup.web.json.JsonSupport
-import spray.json._
+import io.circe.syntax._
 
 trait BaseRoute extends JsonSupport with AppLogger {
-  private val EmptyJson = "{}".parseJson
+  private val EmptyJson = "{}".asJson
   def hlService: HLService
   def actorSys: ActorSystem
 

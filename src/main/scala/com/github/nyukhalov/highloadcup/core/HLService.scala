@@ -166,7 +166,9 @@ class HLServiceImpl extends HLService {
       val toBirthDate = fromAge.map(fa => now.minusYears(fa).getMillis / 1000)
 
       isLocationExist(id) match {
-        case true => DB.getLocAvgRating(id, fromDate, toDate, fromBirthDate, toBirthDate, gender).map(res => LocAvgRating(res))
+        case true =>
+          DB.getLocAvgRating(id, fromDate, toDate, fromBirthDate, toBirthDate, gender)
+            .map(res => LocAvgRating(BigDecimal(res).setScale(5, BigDecimal.RoundingMode.HALF_UP).toFloat))
 
         case false => Future.successful(NotExist)
       }

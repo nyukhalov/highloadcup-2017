@@ -1,33 +1,40 @@
 package com.github.nyukhalov.highloadcup.web.json
 
-import com.github.nyukhalov.highloadcup.core.json.{DomainJsonProtocol, LowerCaseJsonProtocol}
-import spray.json.{DefaultJsonProtocol, JsNull, JsNumber, JsValue, JsonFormat, JsonWriter, RootJsonFormat, deserializationError}
+import com.github.nyukhalov.highloadcup.core.json.DomainCodec
 import com.github.nyukhalov.highloadcup.web.domain._
+import io.circe.Decoder.{withReattempt}
+import io.circe._
 
-trait JsonSupport extends LowerCaseJsonProtocol with DomainJsonProtocol {
+trait JsonSupport extends DomainCodec {
 
-  implicit object MyFloatJsonFormat extends JsonFormat[Float] {
-    def write(x: Float): JsValue = JsNumber(BigDecimal(x).setScale(5, BigDecimal.RoundingMode.HALF_UP))
-    def read(value: JsValue): Float = DefaultJsonProtocol.FloatJsonFormat.read(value)
-  }
-
-  class MyOptionJsonFormat[T: JsonFormat] extends OptionFormat[T] {
-    override def read(value: JsValue): Option[T] = {
-      value match {
-        case JsNull => deserializationError("Expected not null value")
-        case _ => super.read(value)
+  implicit final def decodeOption[A](implicit d: Decoder[A]): Decoder[Option[A]] = withReattempt {
+    case c: HCursor =>
+      if (c.value.isNull) {
+        Left(DecodingFailure("null", c.history))
+      } else {
+        d(c) match {
+          case Right(a) => Right(Some(a))
+          case Left(df) if df.history.isEmpty => Right(None)
+          case Left(df) => Left(df)
+        }
       }
-    }
+    case c: FailedCursor =>
+      if (!c.incorrectFocus) Right(None) else Left(DecodingFailure("[A]Option[A]", c.history))
   }
 
-  override implicit def optionFormat[T: JsonFormat]: JsonFormat[Option[T]] = new MyOptionJsonFormat[T]
+  implicit val encodeLocAvg: Encoder[LocAvgRating] =
+    Encoder.forProduct1("avg")(x => x.avg)
 
-  implicit val userUpdateFormat = jsonFormat5(UserUpdate)
-  implicit val visitUpdateFormat = jsonFormat4(VisitUpdate)
+  implicit val encodeUserVisit: Encoder[UserVisit] =
+    Encoder.forProduct3("mark", "visited_at", "place")(x => (x.mark, x.visitedAt, x.place))
 
-  implicit val locationUpdateFormat = jsonFormat4(LocationUpdate)
+  implicit val encodeUserVisits: Encoder[UserVisits] =
+    Encoder.forProduct1("visits")(x => x.visits)
 
-  implicit val locAvgRating = jsonFormat1(LocAvgRating)
-  implicit val userVisitsFormat = jsonFormat3(UserVisit)
-  implicit val userVisitFormat = jsonFormat1(UserVisits)
+  implicit val decodeLocUpdate: Decoder[LocationUpdate] =
+    Decoder.forProduct4("place", "country", "city", "distance")(LocationUpdate.apply)
+  implicit val decodeUserUpdate: Decoder[UserUpdate] =
+    Decoder.forProduct5("email", "first_name", "last_name", "gender", "birth_date")(UserUpdate.apply)
+  implicit val decodeVisitUpdate: Decoder[VisitUpdate] =
+    Decoder.forProduct4("location", "user", "visited_at", "mark")(VisitUpdate.apply)
 }

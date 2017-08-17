@@ -6,9 +6,9 @@ import akka.actor.{Actor, Props}
 import com.github.nyukhalov.highloadcup.core.{AppLogger, HLService}
 import better.files._
 import com.github.nyukhalov.highloadcup.core.domain._
-import com.github.nyukhalov.highloadcup.core.json.DomainJsonProtocol
-import spray.json._
-
+import com.github.nyukhalov.highloadcup.core.json.DomainCodec
+import io.circe._, io.circe.parser._
+import io.circe.parser.decode
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future, duration}
 
@@ -19,7 +19,7 @@ object DataLoaderActor {
   def props(hLService: HLService): Props = Props(classOf[DataLoaderActor], hLService)
 }
 
-class DataLoaderActor(hlService: HLService) extends Actor with AppLogger with DomainJsonProtocol {
+class DataLoaderActor(hlService: HLService) extends Actor with AppLogger with DomainCodec {
 
   import DataLoaderActor._
 
@@ -54,23 +54,29 @@ class DataLoaderActor(hlService: HLService) extends Actor with AppLogger with Do
 
       f.name.split("_")(0) match {
         case "users" =>
-          val users = content.parseJson.convertTo[Users]
-          usersLoaded += users.users.length
-          val f = hlService.addUsers(users.users)
-          wait(f)
+          decode[Users](content) match {
+            case Right(users) =>
+              usersLoaded += users.users.length
+              val f = hlService.addUsers(users.users)
+              wait(f)
+          }
+
 
         case "locations" =>
-          val locations = content.parseJson.convertTo[Locations]
-          locationsLoaded += locations.locations.length
-          val f = hlService.addLocations(locations.locations)
-          wait(f)
-
+          decode[Locations](content) match {
+            case Right(locations) =>
+              locationsLoaded += locations.locations.length
+              val f = hlService.addLocations(locations.locations)
+              wait(f)
+          }
 
         case "visits" =>
-          val visits = content.parseJson.convertTo[Visits]
-          visitsLoaded += visits.visits.length
-          val f = hlService.addVisits(visits.visits)
-          wait(f)
+          decode[Visits](content) match {
+            case Right(visits) =>
+              visitsLoaded += visits.visits.length
+              val f = hlService.addVisits(visits.visits)
+              wait(f)
+          }
 
         case t => logger.error(s"Unknown type of data: $t")
       }

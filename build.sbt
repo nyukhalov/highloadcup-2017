@@ -8,13 +8,13 @@ resolvers ++= Seq(
   "Typesafe repository"       at "http://repo.typesafe.com/typesafe/releases/",
   "Sonatype OSS Snapshots"    at "https://oss.sonatype.org/content/repositories/snapshots"
 )
+resolvers += Resolver.bintrayRepo("hseeberger", "maven")
 
 libraryDependencies += "org.typelevel" %% "cats" % "0.9.0"
 libraryDependencies ++= Seq(
   "com.typesafe.akka"           %% "akka-actor"             % "2.5.3",
   "com.typesafe.akka"           %% "akka-stream"            % "2.5.3",
   "com.typesafe.akka"           %% "akka-http"              % "10.0.9",
-  "com.typesafe.akka"           %% "akka-http-spray-json"   % "10.0.9",
   "com.typesafe"                %  "config"                 % "1.3.1",
   "ch.qos.logback"              %  "logback-classic"        % "1.2.3",
   "com.typesafe.scala-logging"  %% "scala-logging"          % "3.7.2",
@@ -22,6 +22,10 @@ libraryDependencies ++= Seq(
   "com.typesafe.slick" %% "slick" % "3.2.1",
   "com.h2database" % "h2" % "1.4.187",
   "joda-time" % "joda-time" % "2.9.9",
+  "de.heikoseeberger" %% "akka-http-circe" % "1.18.0",
+  "io.circe"                %% "circe-core"             % "0.8.0",
+  "io.circe"                %% "circe-generic"          % "0.8.0",
+  "io.circe"                %% "circe-parser"           % "0.8.0",
 
   "com.typesafe.akka" %% "akka-testkit" % "2.5.3" % Test,
   "com.typesafe.akka" %% "akka-stream-testkit" % "2.5.3" % Test,

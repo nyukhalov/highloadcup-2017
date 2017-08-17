@@ -1,9 +1,10 @@
 package com.github.nyukhalov.highloadcup.web.json
 
 import com.github.nyukhalov.highloadcup.core.domain.User
-import com.github.nyukhalov.highloadcup.web.domain.UserUpdate
+import com.github.nyukhalov.highloadcup.web.domain.{LocAvgRating, UserUpdate}
 import org.specs2.mutable.Specification
-import spray.json._
+import io.circe.parser._
+import io.circe.syntax._
 
 class JsonSupportSpec extends Specification with JsonSupport {
   "UserUpdate" should {
@@ -15,7 +16,20 @@ class JsonSupportSpec extends Specification with JsonSupport {
                   |}
                 """.stripMargin
 
-      str.parseJson.convertTo[UserUpdate] must throwA[Exception]
+      val dec = decode[UserUpdate](str)
+      dec.isLeft must beTrue
+    }
+
+    "one value" in {
+      val str = """
+                  |{
+                  | "email": "email"
+                  |}
+                """.stripMargin
+
+      val update = decode[UserUpdate](str).toOption.get
+
+      update mustEqual UserUpdate(Some("email"), None, None, None, None)
     }
   }
 
@@ -41,7 +55,7 @@ class JsonSupportSpec extends Specification with JsonSupport {
       """.stripMargin
 
       val expectedUser = User(id, email, firstName, lastName, gender, birthDate)
-      val user = str.parseJson.convertTo[User]
+      val user = decode[User](str).toOption.get
 
       user mustEqual expectedUser
     }
@@ -58,7 +72,15 @@ class JsonSupportSpec extends Specification with JsonSupport {
         |}
       """.stripMargin
 
-      str.parseJson.convertTo[User] must throwA[Exception]
+      decode[User](str).isLeft must beTrue
+    }
+  }
+
+  "LocAvg" should {
+    "5 digits" in {
+      val avg = LocAvgRating(3.12345f)
+
+      avg.asJson.noSpaces mustEqual """{"avg":3.12345}"""
     }
   }
 }

@@ -1,20 +1,35 @@
 package com.github.nyukhalov.highloadcup.web.route
 
 import akka.actor.{ActorSystem, Props}
-import akka.http.scaladsl.server.{Route, RouteResult}
-import com.github.nyukhalov.highloadcup.web.actor.PerRequestCreator
-import com.github.nyukhalov.highloadcup.web.domain.RestRequest
+import akka.http.scaladsl.marshalling.ToResponseMarshallable
+import akka.http.scaladsl.model.StatusCodes
+import com.github.nyukhalov.highloadcup.core.AppLogger
+import com.github.nyukhalov.highloadcup.core.domain.{Location, User, Visit}
+import com.github.nyukhalov.highloadcup.web.domain.{Error, LocAvgRating, NotExist, RestRequest, SuccessfulOperation, UserVisits, Validation}
 import com.github.nyukhalov.highloadcup.web.json.JsonSupport
+import spray.json._
 
-import scala.concurrent.Promise
+trait BaseRoute extends JsonSupport with AppLogger {
+  private val EmptyJson = "{}".parseJson
 
-trait BaseRoute extends PerRequestCreator with JsonSupport {
   def actorSys: ActorSystem
 
-  def handleRequest(targetProps: Props, message: RestRequest): Route = ctx => {
-    val p = Promise[RouteResult]
-    implicit val actorSystem = actorSys
-    perRequest(ctx, targetProps, message, p)
-    p.future
+  private def t123(m: => ToResponseMarshallable): ToResponseMarshallable = {
+    m
+  }
+
+  def t(o: AnyRef): ToResponseMarshallable = {
+    o match {
+      case res: User => t123(StatusCodes.OK, res)
+      case res: Visit => t123(StatusCodes.OK, res)
+      case res: Location => t123(StatusCodes.OK, res)
+      case avg: LocAvgRating => t123(StatusCodes.OK, avg)
+      case uv: UserVisits => t123(StatusCodes.OK, uv)
+
+      case SuccessfulOperation => t123(StatusCodes.OK, EmptyJson)
+      case ne: NotExist => t123(StatusCodes.NotFound, ne)
+      case v: Validation => t123(StatusCodes.BadRequest, v)
+      case e: Error => t123(StatusCodes.InternalServerError, e)
+    }
   }
 }

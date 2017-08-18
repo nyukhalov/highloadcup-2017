@@ -68,6 +68,24 @@ class HLServiceSpec extends Specification {
       s.updateLocation(loc.id, LocationUpdate(Some("new place"), None, None, None)) mustEqual SuccessfulOperation
       s.getLocation(loc.id) mustEqual loc.copy(place = "new place")
     }
+
+    "get avg rating" in {
+      val s = init
+      val user = User(1, "e", "fn", "ln", "m", 123456)
+      val user2 = User(2, "e", "fn", "ln", "f", 123456)
+      val loc = Location(2, "p", "c", "ci", 10)
+      val visit1 = Visit(1, loc.id, user.id, VisitV.minVisitAt, 5)
+      val visit2 = Visit(2, loc.id, user2.id, VisitV.maxVisitAt, 3)
+      s.createUser(user)
+      s.createUser(user2)
+      s.createLocation(loc)
+      s.createVisit(visit1)
+      s.createVisit(visit2)
+
+      s.getAverageRating(loc.id, None, None, None, None, None).asInstanceOf[LocAvgRating].avg mustEqual 4.0
+      s.getAverageRating(loc.id, None, None, None, None, Some("m")).asInstanceOf[LocAvgRating].avg mustEqual visit1.mark
+      s.getAverageRating(loc.id, None, None, None, None, Some("f")).asInstanceOf[LocAvgRating].avg mustEqual visit2.mark
+    }
   }
 
   "Visit" should {

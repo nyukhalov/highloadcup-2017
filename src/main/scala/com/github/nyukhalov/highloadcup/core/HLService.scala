@@ -178,7 +178,7 @@ class HLServiceImpl extends HLService {
       UserV.isValidGender(gender.getOrElse("m"))
   }
 
-  override def getAverageRating(id: Int, fromDate: Option[Long], toDate: Option[Long],
+  override def getAverageRating(locId: Int, fromDate: Option[Long], toDate: Option[Long],
                                 fromAge: Option[Int], toAge: Option[Int], gender: Option[String]): AnyRef = {
     if (!isValidParams(fromDate, toDate, fromAge, toAge, gender)) {
       Validation
@@ -189,7 +189,7 @@ class HLServiceImpl extends HLService {
       val fromBirthDate = toAge.map(ta => now.minusYears(ta).getMillis / 1000)
       val toBirthDate = fromAge.map(fa => now.minusYears(fa).getMillis / 1000)
 
-      cacheGetLocation(id) match {
+      cacheGetLocation(locId) match {
         case None => NotExist
 
         case Some(l) =>
@@ -234,24 +234,15 @@ class HLServiceImpl extends HLService {
   }
 
   override def addUsers(users: List[User]): Unit = {
-    users.foreach(u => userMap += (u.id -> User2(u, mutable.Set())))
+    users.foreach(u => createUser(u))
   }
 
   override def addLocations(locations: List[Location]): Unit = {
-    locations.foreach(l => locMap += (l.id -> Location2(l, mutable.Set())))
+    locations.foreach(l => createLocation(l))
   }
 
   override def addVisits(visits: List[Visit]): Unit = {
-    visits.foreach(v => {
-      val user = cacheGetUser(v.user)
-      val loc = cacheGetLocation(v.location)
-      (user, loc) match {
-        case (Some(u), Some(l)) =>
-          visitMap += (v.id -> Visit2(v, l.location, u.user))
-
-        case _ => throw new RuntimeException(s"User or Location does not exist for visit $v")
-      }
-    })
+    visits.foreach(v => createVisit(v))
   }
 
   override def createUser(user: User): AnyRef = {

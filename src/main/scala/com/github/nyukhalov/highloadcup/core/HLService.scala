@@ -4,13 +4,18 @@ import com.github.nyukhalov.highloadcup.core.domain._
 import com.github.nyukhalov.highloadcup.database.DB
 import com.github.nyukhalov.highloadcup.web.domain._
 import org.joda.time.{DateTime, DateTimeZone}
+import java.util.concurrent.ConcurrentHashMap
+import scala.collection.JavaConverters._
+import scala.collection.mutable
 
 import scala.concurrent.Future
 
 trait HLService {
 
   def addUsers(users: List[User]): Future[AnyRef]
+
   def addLocations(locations: List[Location]): Future[AnyRef]
+
   def addVisits(visits: List[Visit]): Future[AnyRef]
 
   // USER
@@ -53,9 +58,9 @@ class HLServiceImpl extends HLService {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  var userMap: Map[Int, User] = Map[Int, User]()
-  var visitMap: Map[Int, Visit] = Map[Int, Visit]()
-  var locMap: Map[Int, Location] = Map[Int, Location]()
+  val userMap: mutable.Map[Int, User] = new ConcurrentHashMap[Int, User]() asScala
+  val visitMap: mutable.Map[Int, Visit] = new ConcurrentHashMap[Int, Visit]() asScala
+  val locMap: mutable.Map[Int, Location] = new ConcurrentHashMap[Int, Location]() asScala
 
 
   private def cacheGetVisit(id: Int): Option[Visit] = visitMap.get(id)
@@ -72,9 +77,7 @@ class HLServiceImpl extends HLService {
       Future.successful(Validation)
     } else {
       if (!isVisitExist(visit.id) && isUserExist(visit.user) && isLocationExist(visit.location)) {
-        visitMap.synchronized {
-          visitMap = visitMap + (visit.id -> visit)
-        }
+        visitMap += (visit.id -> visit)
         DB.insertVisit(visit).map(_ => SuccessfulOperation)
       }
       else {
@@ -110,9 +113,7 @@ class HLServiceImpl extends HLService {
             visitUpdate.mark.getOrElse(v.mark)
           )
 
-          visitMap.synchronized{
-            visitMap = visitMap + (updatedVisit.id -> updatedVisit)
-          }
+          visitMap += (updatedVisit.id -> updatedVisit)
           DB.updateVisit(updatedVisit).map(_ => SuccessfulOperation)
       }
     }
@@ -133,9 +134,7 @@ class HLServiceImpl extends HLService {
     if (!LocationV.isValid(location) || isLocationExist(location.id)) {
       Future.successful(Validation)
     } else {
-      locMap.synchronized {
-        locMap = locMap + (location.id -> location)
-      }
+      locMap += (location.id -> location)
       DB.insertLocation(location).map(_ => SuccessfulOperation)
     }
   }
@@ -192,9 +191,7 @@ class HLServiceImpl extends HLService {
             locationUpdate.distance.getOrElse(l.distance)
           )
 
-          locMap.synchronized {
-            locMap = locMap + (updatedLocation.id -> updatedLocation)
-          }
+          locMap += (updatedLocation.id -> updatedLocation)
           DB.updateLocation(updatedLocation).map(_ => SuccessfulOperation)
       }
     }
@@ -205,23 +202,17 @@ class HLServiceImpl extends HLService {
   }
 
   override def addUsers(users: List[User]): Future[AnyRef] = {
-    userMap.synchronized {
-      users.foreach(u => userMap = userMap + (u.id -> u))
-    }
+    users.foreach(u => userMap += (u.id -> u))
     DB.insertUsers(users)
   }
 
   override def addLocations(locations: List[Location]) = {
-    locMap.synchronized {
-      locations.foreach(l => locMap = locMap + (l.id -> l))
-    }
+    locations.foreach(l => locMap += (l.id -> l))
     DB.insertLocations(locations)
   }
 
   override def addVisits(visits: List[Visit]) = {
-    visitMap.synchronized {
-      visits.foreach(v => visitMap = visitMap + (v.id -> v))
-    }
+    visits.foreach(v => visitMap += (v.id -> v))
     DB.insertVisits(visits)
   }
 
@@ -232,9 +223,7 @@ class HLServiceImpl extends HLService {
       isUserExist(user.id) match {
         case true => Future.successful(Validation)
         case false =>
-          userMap.synchronized {
-            userMap = userMap + (user.id -> user)
-          }
+          userMap += (user.id -> user)
           DB.insertUser(user).map(_ => SuccessfulOperation)
       }
     }
@@ -279,9 +268,7 @@ class HLServiceImpl extends HLService {
             userUpdate.birthDate.getOrElse(u.birthDate)
           )
 
-          userMap.synchronized{
-            userMap = userMap + (updatedUser.id -> updatedUser)
-          }
+          userMap += (updatedUser.id -> updatedUser)
           DB.updateUser(updatedUser).map(_ => SuccessfulOperation)
       }
     }

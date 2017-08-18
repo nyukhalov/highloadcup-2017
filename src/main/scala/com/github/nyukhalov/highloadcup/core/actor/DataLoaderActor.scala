@@ -57,8 +57,7 @@ class DataLoaderActor(hlService: HLService) extends Actor with AppLogger with Do
           decode[Users](content) match {
             case Right(users) =>
               usersLoaded += users.users.length
-              val f = hlService.addUsers(users.users)
-              wait(f)
+              hlService.addUsers(users.users)
           }
 
 
@@ -66,27 +65,20 @@ class DataLoaderActor(hlService: HLService) extends Actor with AppLogger with Do
           decode[Locations](content) match {
             case Right(locations) =>
               locationsLoaded += locations.locations.length
-              val f = hlService.addLocations(locations.locations)
-              wait(f)
+              hlService.addLocations(locations.locations)
           }
 
         case "visits" =>
           decode[Visits](content) match {
             case Right(visits) =>
               visitsLoaded += visits.visits.length
-              val f = hlService.addVisits(visits.visits)
-              wait(f)
+              hlService.addVisits(visits.visits)
           }
 
         case t => logger.error(s"Unknown type of data: $t")
       }
     }
     logger.info(s"Data loaded successfully: users=$usersLoaded, locations=$locationsLoaded, visits=$visitsLoaded")
-  }
-
-  private def wait[T](future: Future[T]) = {
-    implicit val ec = context.dispatcher
-    Await.result(future, 30.seconds)
   }
 
   override def receive: Receive = {

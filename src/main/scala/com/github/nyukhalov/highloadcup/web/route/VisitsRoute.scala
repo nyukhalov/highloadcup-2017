@@ -45,16 +45,12 @@ trait VisitsRoute extends BaseRoute {
   }
 
   def createVisit(visit: Visit): Route = ctx => {
-    import scala.concurrent.ExecutionContext.Implicits.global
-    hlService
-      .createVisit(visit)
-      .flatMap(x => ctx.complete(t(x)))
+    val r = hlService.createVisit(visit)
+    ctx.complete(t(r))
   }
 
   def updateVisit(id: Int, visitUpdate: VisitUpdate): Route = ctx => {
-    import scala.concurrent.ExecutionContext.Implicits.global
-    hlService
-      .updateVisit(id, visitUpdate)
-      .flatMap(x => ctx.complete(t(x)))
+    val r = hlService.updateVisit(id, visitUpdate)
+    ctx.complete(t(r))
   }
 }

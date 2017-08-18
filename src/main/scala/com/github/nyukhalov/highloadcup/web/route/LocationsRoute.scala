@@ -4,7 +4,6 @@ import akka.http.scaladsl.server.Directives.{complete, get, path}
 import akka.http.scaladsl.server.{Route, RouteResult}
 import akka.http.scaladsl.server.Directives._
 import com.github.nyukhalov.highloadcup.core.domain.{Location, LocationV, UserV}
-import com.github.nyukhalov.highloadcup.database.DB
 import com.github.nyukhalov.highloadcup.web.domain._
 import org.joda.time.{DateTime, DateTimeZone}
 
@@ -60,23 +59,17 @@ trait LocationsRoute extends BaseRoute {
   }
 
   def createLocation(location: Location): Route = ctx => {
-    import scala.concurrent.ExecutionContext.Implicits.global
-    hlService
-      .createLocation(location)
-      .flatMap(x => ctx.complete(t(x)))
+    val r = hlService.createLocation(location)
+    ctx.complete(t(r))
   }
 
   def updateLocation(id: Int, locationUpdate: LocationUpdate): Route = ctx => {
-    import scala.concurrent.ExecutionContext.Implicits.global
-    hlService
-      .updateLocation(id, locationUpdate)
-      .flatMap(x => ctx.complete(t(x)))
+    val r = hlService.updateLocation(id, locationUpdate)
+    ctx.complete(t(r))
   }
 
   def getAvarageRating(id: Int, fromDate: Option[Long], toDate: Option[Long], fromAge: Option[Int], toAge: Option[Int], gender: Option[String]): Route = ctx => {
-    import scala.concurrent.ExecutionContext.Implicits.global
-    hlService
-      .getAverageRating(id, fromDate, toDate, fromAge, toAge, gender)
-      .flatMap(x => ctx.complete(t(x)))
+    val r = hlService.getAverageRating(id, fromDate, toDate, fromAge, toAge, gender)
+    ctx.complete(t(r))
   }
 }

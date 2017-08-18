@@ -3,13 +3,9 @@ package com.github.nyukhalov.highloadcup.web.route
 import akka.http.scaladsl.server.Directives.{complete, get, path}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{Route, RouteResult}
-import com.github.nyukhalov.highloadcup.core.HLService
 import com.github.nyukhalov.highloadcup.core.domain._
-import com.github.nyukhalov.highloadcup.database.DB
 import com.github.nyukhalov.highloadcup.web.domain._
 import com.github.nyukhalov.highloadcup.web.json.JsonSupport
-
-import scala.concurrent.{Future, Promise}
 
 trait UsersRoute extends BaseRoute with JsonSupport {
 
@@ -62,23 +58,17 @@ trait UsersRoute extends BaseRoute with JsonSupport {
   }
 
   def createUser(user: User): Route = ctx => {
-    import scala.concurrent.ExecutionContext.Implicits.global
-    hlService
-      .createUser(user)
-      .flatMap(x => ctx.complete(t(x)))
+    val r = hlService.createUser(user)
+    ctx.complete(t(r))
   }
 
   def updateUser(id: Int, userUpdate: UserUpdate): Route = ctx => {
-    import scala.concurrent.ExecutionContext.Implicits.global
-    hlService
-      .updateUser(id, userUpdate)
-      .flatMap(x => ctx.complete(t(x)))
+    val r = hlService.updateUser(id, userUpdate)
+    ctx.complete(t(r))
   }
 
   def getUserVisits(id: Int, fromDate: Option[Long], toDate: Option[Long], country: Option[String], toDistance: Option[Int]): Route = ctx => {
-    import scala.concurrent.ExecutionContext.Implicits.global
-    hlService
-      .getUserVisits(id, fromDate, toDate, country, toDistance)
-      .flatMap(x => ctx.complete(t(x)))
+    val r = hlService.getUserVisits(id, fromDate, toDate, country, toDistance)
+    ctx.complete(t(r))
   }
 }

@@ -81,7 +81,6 @@ class HLServiceSpec extends Specification {
 
       s.updateLocation(loc.id, LocationUpdate(Some("new place"), None, None, None)) mustEqual SuccessfulOperation
       s.getLocation(loc.id) mustEqual updatedLoc
-      s.visitMap(visit.id).location mustEqual updatedLoc
     }
 
     "get avg rating" in {
@@ -116,10 +115,6 @@ class HLServiceSpec extends Specification {
 
       s.createVisit(visit) mustEqual SuccessfulOperation
       s.getVisit(visit.id) mustEqual visit
-
-      val expectedVisit2 = Visit2(visit, loc, user)
-      s.userMap(user.id).visits.head mustEqual expectedVisit2
-      s.locMap(loc.id).visits.head mustEqual expectedVisit2
     }
 
     "update visit loc properly" in {
@@ -136,9 +131,6 @@ class HLServiceSpec extends Specification {
 
       s.updateVisit(visit.id, VisitUpdate(Some(loc2.id), None, None, None)) mustEqual SuccessfulOperation
       s.getVisit(visit.id) mustEqual visit2
-
-      s.locMap(loc.id).visits.isEmpty must beTrue
-      s.locMap(loc2.id).visits.head mustEqual Visit2(visit2, loc2, user)
     }
 
     "update visit user properly" in {
@@ -155,9 +147,6 @@ class HLServiceSpec extends Specification {
 
       s.updateVisit(visit.id, VisitUpdate(None, Some(user2.id), None, None)) mustEqual SuccessfulOperation
       s.getVisit(visit.id) mustEqual visit2
-
-      s.userMap(user.id).visits.isEmpty must beTrue
-      s.userMap(user2.id).visits.head mustEqual Visit2(visit2, loc, user2)
     }
 
     "update visit visited_at properly" in {
@@ -172,12 +161,6 @@ class HLServiceSpec extends Specification {
 
       s.updateVisit(visit.id, VisitUpdate(None, None, Some(VisitV.maxVisitAt), None)) mustEqual SuccessfulOperation
       s.getVisit(visit.id) mustEqual visit2
-
-      s.userMap(user.id).visits.size mustEqual 1
-      s.userMap(user.id).visits.head mustEqual Visit2(visit2, loc, user)
-
-      s.locMap(loc.id).visits.size mustEqual 1
-      s.locMap(loc.id).visits.head mustEqual Visit2(visit2, loc, user)
     }
   }
 }

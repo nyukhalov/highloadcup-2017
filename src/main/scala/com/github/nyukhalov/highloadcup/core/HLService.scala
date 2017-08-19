@@ -132,6 +132,9 @@ class HLServiceImpl extends HLService {
                   val oldLoc = cacheGetLocation(v.location.id).get
                   val lv2 = oldLoc.visits.find(_.visit.id == id).get
                   oldLoc.visits.remove(lv2)
+                } else {
+                  val lv2 = l.visits.find(_.visit.id == id).get
+                  l.visits.remove(lv2)
                 }
                 l.visits.add(visit2)
 
@@ -139,6 +142,9 @@ class HLServiceImpl extends HLService {
                   val oldUser = cacheGetUser(v.user.id).get
                   val uv2 = oldUser.visits.find(_.visit.id == id).get
                   oldUser.visits.remove(uv2)
+                } else {
+                  val uv2 = u.visits.find(_.visit.id == id).get
+                  u.visits.remove(uv2)
                 }
                 u.visits.add(visit2)
 

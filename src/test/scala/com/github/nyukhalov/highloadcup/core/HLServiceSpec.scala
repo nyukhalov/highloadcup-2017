@@ -172,6 +172,12 @@ class HLServiceSpec extends Specification {
 
       s.updateVisit(visit.id, VisitUpdate(None, None, Some(VisitV.maxVisitAt), None)) mustEqual SuccessfulOperation
       s.getVisit(visit.id) mustEqual visit2
+
+      s.userMap(user.id).visits.size mustEqual 1
+      s.userMap(user.id).visits.head mustEqual Visit2(visit2, loc, user)
+
+      s.locMap(loc.id).visits.size mustEqual 1
+      s.locMap(loc.id).visits.head mustEqual Visit2(visit2, loc, user)
     }
   }
 }

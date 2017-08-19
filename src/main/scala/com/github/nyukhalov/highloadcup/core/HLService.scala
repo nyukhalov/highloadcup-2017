@@ -53,7 +53,7 @@ trait HLService {
   def getAverageRating(id: Int, fromDate: Option[Long], toDate: Option[Long], fromAge: Option[Int], toAge: Option[Int], gender: Option[String]): AnyRef
 }
 
-class HLServiceImpl extends HLService {
+class HLServiceImpl extends HLService with AppLogger {
 
   val userMap: mutable.Map[Int, User2] = new ConcurrentHashMap[Int, User2]() asScala
   val visitMap: mutable.Map[Int, Visit2] = new ConcurrentHashMap[Int, Visit2]() asScala
@@ -84,10 +84,12 @@ class HLServiceImpl extends HLService {
 
       (user, loc) match {
         case (Some(u), Some(l)) =>
-          val visit2 = Visit2(visit, l.location, u.user)
-          u.visits.add(visit2)
-          l.visits.add(visit2)
-          visitMap += (visit.id -> visit2)
+          this.synchronized {
+            val visit2 = Visit2(visit, l.location, u.user)
+            u.visits.add(visit2)
+            l.visits.add(visit2)
+            visitMap += (visit.id -> visit2)
+          }
           SuccessfulOperation
 
         case _ => Validation
@@ -241,6 +243,13 @@ class HLServiceImpl extends HLService {
             val updatedVisits = l.visits.map(v => {
               Visit2(v.visit, updatedLocation, v.user)
             })
+            updatedVisits.map(_.user).foreach(u => {
+              val user = cacheGetUser(u.id).get
+              user.visits.filter(_.location.id == id).foreach(v => {
+                user.visits.remove(v)
+                user.visits.add(Visit2(v.visit, updatedLocation, v.user))
+              })
+            })
             updatedVisits.foreach(v => visitMap += (v.visit.id -> v))
             locMap += (updatedLocation.id -> Location2(updatedLocation, updatedVisits))
           }
@@ -328,6 +337,13 @@ class HLServiceImpl extends HLService {
           this.synchronized {
             val updatedVisits = u.visits.map(v => {
               Visit2(v.visit, v.location, updatedUser)
+            })
+            updatedVisits.map(_.location).foreach(l => {
+              val loc = cacheGetLocation(l.id).get
+              loc.visits.filter(_.user.id == id).foreach(v => {
+                loc.visits.remove(v)
+                loc.visits.add(Visit2(v.visit, v.location, updatedUser))
+              })
             })
             updatedVisits.foreach(v => visitMap += (v.visit.id -> v))
             userMap += (updatedUser.id -> User2(updatedUser, updatedVisits))

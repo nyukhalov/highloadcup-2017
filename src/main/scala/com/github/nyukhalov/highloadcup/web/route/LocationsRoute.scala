@@ -5,9 +5,6 @@ import akka.http.scaladsl.server.{Route, RouteResult}
 import akka.http.scaladsl.server.Directives._
 import com.github.nyukhalov.highloadcup.core.domain.{Location, LocationV, UserV}
 import com.github.nyukhalov.highloadcup.web.domain._
-import org.joda.time.{DateTime, DateTimeZone}
-
-import scala.concurrent.{Future, Promise}
 
 trait LocationsRoute extends BaseRoute {
   private val createLocationRoute =

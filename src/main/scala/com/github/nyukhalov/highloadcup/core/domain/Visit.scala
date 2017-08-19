@@ -1,6 +1,12 @@
 package com.github.nyukhalov.highloadcup.core.domain
 
-final case class Visit(id: Int, location: Int, user: Int, visitedAt: Long, mark: Int)
+final case class Visit(id: Int, location: Int, user: Int, visitedAt: Long, mark: Int) {
+  def getId = id
+  def getLocation = location
+  def getUser = user
+  def getVisited_at = visitedAt
+  def getMark = mark
+}
 
 object VisitV {
   val minVisitAt = 946684800

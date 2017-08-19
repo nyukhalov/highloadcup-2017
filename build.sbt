@@ -24,6 +24,7 @@ libraryDependencies ++= Seq(
   "io.circe"                %% "circe-core"             % "0.8.0",
   "io.circe"                %% "circe-generic"          % "0.8.0",
   "io.circe"                %% "circe-parser"           % "0.8.0",
+  "org.rapidoid" % "rapidoid-http-fast" % "5.4.2",
 
   "com.typesafe.akka" %% "akka-testkit" % "2.5.3" % Test,
   "com.typesafe.akka" %% "akka-stream-testkit" % "2.5.3" % Test,

@@ -1,6 +1,15 @@
 package com.github.nyukhalov.highloadcup.core.domain
 
-final case class User(id: Int, email: String, firstName: String, lastName: String, gender: String, birthDate: Long)
+final case class User(id: Int, email: String, firstName: String, lastName: String, gender: String, birthDate: Long) {
+
+  // for serialization in rapidoid
+  def getId = id
+  def getEmail = email
+  def getFirst_name = firstName
+  def getLast_name = lastName
+  def getGender = gender
+  def getBirth_date = birthDate
+}
 
 object UserV {
   def isValid(user: User): Boolean = {

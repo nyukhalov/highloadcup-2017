@@ -69,6 +69,21 @@ class HLServiceSpec extends Specification {
       s.getLocation(loc.id) mustEqual loc.copy(place = "new place")
     }
 
+    "location update should update visits" in {
+      val s = init
+      val loc = someValidLocation
+      val user = someValidUser
+      val visit = Visit(1, loc.id, user.id, VisitV.minVisitAt, 5)
+      val updatedLoc = loc.copy(place = "new place")
+      s.createLocation(loc)
+      s.createUser(user)
+      s.createVisit(visit)
+
+      s.updateLocation(loc.id, LocationUpdate(Some("new place"), None, None, None)) mustEqual SuccessfulOperation
+      s.getLocation(loc.id) mustEqual updatedLoc
+      s.visitMap(visit.id).location mustEqual updatedLoc
+    }
+
     "get avg rating" in {
       val s = init
       val user = User(1, "e", "fn", "ln", "m", 123456)

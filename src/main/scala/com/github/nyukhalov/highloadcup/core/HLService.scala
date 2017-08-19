@@ -127,21 +127,23 @@ class HLServiceImpl extends HLService {
             case (Some(u), Some(l)) =>
               val visit2 = Visit2(updatedVisit, l.location, u.user)
 
-              if (v.location.id != l.location.id) {
-                val oldLoc = cacheGetLocation(v.location.id).get
-                val lv2 = oldLoc.visits.find(_.visit.id == id).get
-                oldLoc.visits.remove(lv2)
-              }
-              l.visits.add(visit2)
+              this.synchronized {
+                if (v.location.id != l.location.id) {
+                  val oldLoc = cacheGetLocation(v.location.id).get
+                  val lv2 = oldLoc.visits.find(_.visit.id == id).get
+                  oldLoc.visits.remove(lv2)
+                }
+                l.visits.add(visit2)
 
-              if (v.user.id != u.user.id) {
-                val oldUser = cacheGetUser(v.user.id).get
-                val uv2 = oldUser.visits.find(_.visit.id == id).get
-                oldUser.visits.remove(uv2)
-              }
-              u.visits.add(visit2)
+                if (v.user.id != u.user.id) {
+                  val oldUser = cacheGetUser(v.user.id).get
+                  val uv2 = oldUser.visits.find(_.visit.id == id).get
+                  oldUser.visits.remove(uv2)
+                }
+                u.visits.add(visit2)
 
-              visitMap += (id -> visit2)
+                visitMap += (id -> visit2)
+              }
 
               SuccessfulOperation
 
@@ -228,11 +230,14 @@ class HLServiceImpl extends HLService {
             locationUpdate.city.getOrElse(l.location.city),
             locationUpdate.distance.getOrElse(l.location.distance)
           )
-          val updatedVisits = l.visits.map(v => {
-            Visit2(v.visit, updatedLocation, v.user)
-          })
-          updatedVisits.foreach(v => visitMap += (v.visit.id -> v))
-          locMap += (updatedLocation.id -> Location2(updatedLocation, updatedVisits))
+
+          this.synchronized {
+            val updatedVisits = l.visits.map(v => {
+              Visit2(v.visit, updatedLocation, v.user)
+            })
+            updatedVisits.foreach(v => visitMap += (v.visit.id -> v))
+            locMap += (updatedLocation.id -> Location2(updatedLocation, updatedVisits))
+          }
 
           SuccessfulOperation
       }
@@ -313,11 +318,14 @@ class HLServiceImpl extends HLService {
             userUpdate.gender.getOrElse(u.user.gender),
             userUpdate.birthDate.getOrElse(u.user.birthDate)
           )
-          val updatedVisits = u.visits.map(v => {
-            Visit2(v.visit, v.location, updatedUser)
-          })
-          updatedVisits.foreach(v => visitMap += (v.visit.id -> v))
-          userMap += (updatedUser.id -> User2(updatedUser, updatedVisits))
+
+          this.synchronized {
+            val updatedVisits = u.visits.map(v => {
+              Visit2(v.visit, v.location, updatedUser)
+            })
+            updatedVisits.foreach(v => visitMap += (v.visit.id -> v))
+            userMap += (updatedUser.id -> User2(updatedUser, updatedVisits))
+          }
 
           SuccessfulOperation
       }

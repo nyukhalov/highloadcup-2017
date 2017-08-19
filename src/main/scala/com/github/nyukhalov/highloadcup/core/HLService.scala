@@ -59,6 +59,11 @@ class HLServiceImpl extends HLService {
   val visitMap: mutable.Map[Int, Visit2] = new ConcurrentHashMap[Int, Visit2]() asScala
   val locMap: mutable.Map[Int, Location2] = new ConcurrentHashMap[Int, Location2]() asScala
 
+  def createConcurrentSet[T](): mutable.Set[T] = {
+    import scala.collection.JavaConverters._
+    java.util.Collections.newSetFromMap(
+      new java.util.concurrent.ConcurrentHashMap[T, java.lang.Boolean]).asScala
+  }
 
   private def cacheGetVisit(id: Int): Option[Visit2] = visitMap.get(id)
 
@@ -70,7 +75,9 @@ class HLServiceImpl extends HLService {
   }
 
   override def createVisit(visit: Visit): AnyRef = {
-    if (!VisitV.isValid(visit) || isVisitExist(visit.id)) Validation
+    if (!VisitV.isValid(visit) || isVisitExist(visit.id)) {
+      Validation
+    }
     else {
       val user = cacheGetUser(visit.user)
       val loc = cacheGetLocation(visit.location)
@@ -118,25 +125,24 @@ class HLServiceImpl extends HLService {
 
           (user, loc) match {
             case (Some(u), Some(l)) =>
-              // if loc was updated
-              if (v.location.id != updatedVisit.location) {
-                val oldLoc = cacheGetLocation(v.location.id).get
-                val v2 = oldLoc.visits.filter(_.location.id == v.location.id).head
-                oldLoc.visits.remove(v2)
-              }
-
-              // if user was updated
-              if (v.user.id != updatedVisit.user) {
-                val oldUser = cacheGetUser(v.user.id).get
-                val v2 = oldUser.visits.filter(_.user.id == v.user.id).head
-                oldUser.visits.remove(v2)
-              }
-
               val visit2 = Visit2(updatedVisit, l.location, u.user)
+
+              if (v.location.id != l.location.id) {
+                val oldLoc = cacheGetLocation(v.location.id).get
+                val lv2 = oldLoc.visits.find(_.visit.id == id).get
+                oldLoc.visits.remove(lv2)
+              }
               l.visits.add(visit2)
+
+              if (v.user.id != u.user.id) {
+                val oldUser = cacheGetUser(v.user.id).get
+                val uv2 = oldUser.visits.find(_.visit.id == id).get
+                oldUser.visits.remove(uv2)
+              }
               u.visits.add(visit2)
 
-              visitMap += (updatedVisit.id -> visit2)
+              visitMap += (id -> visit2)
+
               SuccessfulOperation
 
             case _ => Validation
@@ -158,7 +164,7 @@ class HLServiceImpl extends HLService {
     if (!LocationV.isValid(location) || isLocationExist(location.id)) {
       Validation
     } else {
-      locMap += (location.id -> Location2(location, mutable.Set()))
+      locMap += (location.id -> Location2(location, createConcurrentSet()))
       SuccessfulOperation
     }
   }
@@ -200,7 +206,7 @@ class HLServiceImpl extends HLService {
           toBirthDate.foreach(to => visits = visits.filter(_.user.birthDate < to))
           gender.foreach(g => visits = visits.filter(_.user.gender == g))
 
-          val res = if (visits.isEmpty) 0f else visits.map(_.visit.mark).sum / visits.size.toFloat
+          val res = if (visits.isEmpty) 0f else visits.toList.map(_.visit.mark).sum / visits.size.toFloat
           LocAvgRating(BigDecimal(res).setScale(5, BigDecimal.RoundingMode.HALF_UP).toFloat)
       }
     }
@@ -222,8 +228,12 @@ class HLServiceImpl extends HLService {
             locationUpdate.city.getOrElse(l.location.city),
             locationUpdate.distance.getOrElse(l.location.distance)
           )
-          // TODO: update visits
-          locMap += (updatedLocation.id -> Location2(updatedLocation, l.visits))
+          val updatedVisits = l.visits.map(v => {
+            Visit2(v.visit, updatedLocation, v.user)
+          })
+          updatedVisits.foreach(v => visitMap += (v.visit.id -> v))
+          locMap += (updatedLocation.id -> Location2(updatedLocation, updatedVisits))
+
           SuccessfulOperation
       }
     }
@@ -234,22 +244,34 @@ class HLServiceImpl extends HLService {
   }
 
   override def addUsers(users: List[User]): Unit = {
-    users.foreach(u => createUser(u))
+    users.foreach(u => {
+      if (createUser(u) != SuccessfulOperation) {
+        throw new RuntimeException(s"Bad user $u")
+      }
+    })
   }
 
   override def addLocations(locations: List[Location]): Unit = {
-    locations.foreach(l => createLocation(l))
+    locations.foreach(l => {
+      if (createLocation(l) != SuccessfulOperation) {
+        throw new RuntimeException(s"Bad location $l")
+      }
+    })
   }
 
   override def addVisits(visits: List[Visit]): Unit = {
-    visits.foreach(v => createVisit(v))
+    visits.foreach(v => {
+      if (createVisit(v) != SuccessfulOperation) {
+        throw new RuntimeException(s"Bad visit $v")
+      }
+    })
   }
 
   override def createUser(user: User): AnyRef = {
     if (!UserV.isValid(user) || isUserExist(user.id)) {
       Validation
     } else {
-      userMap += (user.id -> User2(user, mutable.Set()))
+      userMap += (user.id -> User2(user, createConcurrentSet()))
       SuccessfulOperation
     }
   }
@@ -272,7 +294,6 @@ class HLServiceImpl extends HLService {
     else if (uu.firstName.isDefined && !UserV.isValidName(uu.firstName.get)) false
     else if (uu.lastName.isDefined && !UserV.isValidName(uu.lastName.get)) false
     else if (uu.gender.isDefined && !UserV.isValidGender(uu.gender.get)) false
-    else if (uu.birthDate.isDefined && !UserV.isValidBirthDate(uu.birthDate.get)) false
     else true
   }
 
@@ -292,8 +313,12 @@ class HLServiceImpl extends HLService {
             userUpdate.gender.getOrElse(u.user.gender),
             userUpdate.birthDate.getOrElse(u.user.birthDate)
           )
-          // TODO: update visits
-          userMap += (updatedUser.id -> User2(updatedUser, u.visits))
+          val updatedVisits = u.visits.map(v => {
+            Visit2(v.visit, v.location, updatedUser)
+          })
+          updatedVisits.foreach(v => visitMap += (v.visit.id -> v))
+          userMap += (updatedUser.id -> User2(updatedUser, updatedVisits))
+
           SuccessfulOperation
       }
     }

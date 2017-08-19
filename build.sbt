@@ -53,7 +53,7 @@ dockerfile in docker := {
       """)
 
     expose(80)
-    entryPointRaw(s"$targetDir/bin/${executableScriptName.value} -J-Xms3584m -J-Xmx3584m -J-server -J-XX:+UseCondCardMark -J-XX:-UseBiasedLocking")
+    entryPointRaw(s"$targetDir/bin/${executableScriptName.value} -J-Xms3584m -J-Xmx3584m -J-server -J-XX:+UseG1GC")
 
 //    env("SPARK_BUILD", s"spark-${sparkVersion}-bin-hadoop2.4")
 //    runRaw("""wget http://d3kbcqa49mib13.cloudfront.net/$SPARK_BUILD.tgz && \

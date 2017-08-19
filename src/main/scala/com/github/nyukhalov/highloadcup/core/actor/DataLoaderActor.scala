@@ -48,7 +48,7 @@ class DataLoaderActor(hlService: HLService) extends Actor with AppLogger with Do
       val entityName = x.name.split("_")(0)
       (x, entity2loadPriority(entityName))
     }).sortBy(_._2).foreach { case (f, _) =>
-      logger.debug(s"Read file: $f")
+      logger.info(s"Read file: $f")
 
       val content = f.contentAsString(charset = Charset.forName("UTF-8"))
 
@@ -73,6 +73,7 @@ class DataLoaderActor(hlService: HLService) extends Actor with AppLogger with Do
             case Right(visits) =>
               visitsLoaded += visits.visits.length
               hlService.addVisits(visits.visits)
+              visits.visits
           }
 
         case t => logger.error(s"Unknown type of data: $t")

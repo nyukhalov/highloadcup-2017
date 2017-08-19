@@ -7,8 +7,7 @@ object UserV {
     isValidEmail(user.email) &&
     isValidName(user.firstName) &&
     isValidName(user.lastName) &&
-    isValidGender(user.gender) &&
-    isValidBirthDate(user.birthDate)
+    isValidGender(user.gender)
   }
 
   def isValidEmail(email: String): Boolean = {
@@ -21,9 +20,5 @@ object UserV {
 
   def isValidGender(g: String): Boolean = {
     g == "m" || g == "f"
-  }
-
-  def isValidBirthDate(bd: Long): Boolean = {
-    bd >= -1262304000 && bd <= 915148800
   }
 }

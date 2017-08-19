@@ -76,15 +76,17 @@ class HLServiceSpec extends Specification {
       val loc = Location(2, "p", "c", "ci", 10)
       val visit1 = Visit(1, loc.id, user.id, VisitV.minVisitAt, 5)
       val visit2 = Visit(2, loc.id, user2.id, VisitV.maxVisitAt, 3)
+      val visit3 = Visit(3, loc.id, user2.id, VisitV.maxVisitAt, 3)
       s.createUser(user)
       s.createUser(user2)
       s.createLocation(loc)
       s.createVisit(visit1)
       s.createVisit(visit2)
+      s.createVisit(visit3)
 
-      s.getAverageRating(loc.id, None, None, None, None, None).asInstanceOf[LocAvgRating].avg mustEqual 4.0
+      s.getAverageRating(loc.id, None, None, None, None, None).asInstanceOf[LocAvgRating].avg mustEqual 3.66667f
       s.getAverageRating(loc.id, None, None, None, None, Some("m")).asInstanceOf[LocAvgRating].avg mustEqual visit1.mark
-      s.getAverageRating(loc.id, None, None, None, None, Some("f")).asInstanceOf[LocAvgRating].avg mustEqual visit2.mark
+      s.getAverageRating(loc.id, None, None, None, None, Some("f")).asInstanceOf[LocAvgRating].avg mustEqual 3
     }
   }
 
@@ -141,6 +143,20 @@ class HLServiceSpec extends Specification {
 
       s.userMap(user.id).visits.isEmpty must beTrue
       s.userMap(user2.id).visits.head mustEqual Visit2(visit2, loc, user2)
+    }
+
+    "update visit visited_at properly" in {
+      val s = init
+      val user = someValidUser
+      val loc = someValidLocation
+      val visit = Visit(3, loc.id, user.id, VisitV.minVisitAt, 3)
+      val visit2 = visit.copy(visitedAt = VisitV.maxVisitAt)
+      s.createUser(user)
+      s.createLocation(loc)
+      s.createVisit(visit)
+
+      s.updateVisit(visit.id, VisitUpdate(None, None, Some(VisitV.maxVisitAt), None)) mustEqual SuccessfulOperation
+      s.getVisit(visit.id) mustEqual visit2
     }
   }
 }

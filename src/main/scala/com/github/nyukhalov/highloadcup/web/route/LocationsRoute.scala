@@ -46,7 +46,7 @@ trait LocationsRoute extends BaseRoute {
         get {
           parameters('fromDate.as[Long] ?, 'toDate.as[Long] ?, 'fromAge.as[Int] ?, 'toAge.as[Int] ?, 'gender.as[String] ?) {
             (fromDate, toDate, fromAge, toAge, gender) =>
-              getAvarageRating(id, fromDate, toDate, fromAge, toAge, gender)
+              getAverageRating(id, fromDate, toDate, fromAge, toAge, gender)
           }
         }
     }
@@ -68,8 +68,8 @@ trait LocationsRoute extends BaseRoute {
     ctx.complete(t(r))
   }
 
-  def getAvarageRating(id: Int, fromDate: Option[Long], toDate: Option[Long], fromAge: Option[Int], toAge: Option[Int], gender: Option[String]): Route = ctx => {
-    val r = hlService.getAverageRating(id, fromDate, toDate, fromAge, toAge, gender)
+  def getAverageRating(locId: Int, fromDate: Option[Long], toDate: Option[Long], fromAge: Option[Int], toAge: Option[Int], gender: Option[String]): Route = ctx => {
+    val r = hlService.getAverageRating(locId, fromDate, toDate, fromAge, toAge, gender)
     ctx.complete(t(r))
   }
 }

@@ -328,6 +328,7 @@ class HLServiceImpl extends HLService with AppLogger {
       val res = visits
         .map(v => UserVisit(v._1.mark, v._1.visitedAt, v._2.place))
         .sortBy(_.visitedAt)
+
       UserVisits(res)
     }
   }

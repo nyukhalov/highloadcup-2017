@@ -2,11 +2,10 @@ package com.github.nyukhalov.highloadcup.web
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.HttpRequest
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpMethods, HttpRequest}
+import akka.http.scaladsl.server.ContentNegotiator.Alternative.ContentType
 import akka.stream.Materializer
-import com.github.nyukhalov.highloadcup.core.{AppLogger, HLServiceImpl}
-import com.github.nyukhalov.highloadcup.core.actor.DataLoaderActor
-import com.github.nyukhalov.highloadcup.core.actor.DataLoaderActor.LoadData
+import com.github.nyukhalov.highloadcup.core.{AppLogger, DataLoader, HLServiceImpl}
 import com.typesafe.config.ConfigFactory
 
 import scala.concurrent.ExecutionContext
@@ -19,14 +18,21 @@ object WebBoot extends AppLogger {
     val serverPort = config.getInt("server.port")
 
     val hlService = new HLServiceImpl()
-    actorSystem.actorOf(DataLoaderActor.props(hlService), "data-loader") ! LoadData(pathToZip)
+    new DataLoader(hlService).loadData(pathToZip)
     new WebServer(serverPort, hlService).start()
 
     val http = Http()
-    http.singleRequest(HttpRequest(uri = s"http://localhost:$serverPort/users/1"))
-    http.singleRequest(HttpRequest(uri = s"http://localhost:$serverPort/locations/1"))
-    http.singleRequest(HttpRequest(uri = s"http://localhost:$serverPort/visits/1"))
-    http.singleRequest(HttpRequest(uri = s"http://localhost:$serverPort/users/1/visits"))
-    http.singleRequest(HttpRequest(uri = s"http://localhost:$serverPort/locations/1/avg"))
+    (1 to 5).foreach { _ =>
+      http.singleRequest(HttpRequest(uri = s"http://localhost:$serverPort/users/1"))
+      http.singleRequest(HttpRequest(uri = s"http://localhost:$serverPort/locations/1"))
+      http.singleRequest(HttpRequest(uri = s"http://localhost:$serverPort/visits/1"))
+      http.singleRequest(HttpRequest(uri = s"http://localhost:$serverPort/users/1/visits"))
+      http.singleRequest(HttpRequest(uri = s"http://localhost:$serverPort/locations/1/avg"))
+
+      val emptyJson = HttpEntity(ContentTypes.`application/json`, "{}".getBytes)
+      http.singleRequest(HttpRequest(method = HttpMethods.POST, uri = s"http://localhost:$serverPort/users/1/new", entity = emptyJson))
+      http.singleRequest(HttpRequest(method = HttpMethods.POST, uri = s"http://localhost:$serverPort/visits/1/new", entity = emptyJson))
+      http.singleRequest(HttpRequest(method = HttpMethods.POST, uri = s"http://localhost:$serverPort/locations/1/new", entity = emptyJson))
+    }
   }
 }

@@ -19,6 +19,6 @@ class WebServer(serverPort: Int,
 
   def start(): Unit = {
     Http().bind("0.0.0.0", serverPort).runForeach(_.handleWith(Route.handlerFlow(route)))
-    logger.debug(s"Server started on port $serverPort")
+    logger.info(s"Server started on port $serverPort")
   }
 }

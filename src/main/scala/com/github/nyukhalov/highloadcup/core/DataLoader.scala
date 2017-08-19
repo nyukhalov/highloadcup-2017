@@ -1,27 +1,19 @@
-package com.github.nyukhalov.highloadcup.core.actor
+package com.github.nyukhalov.highloadcup.core
 
 import java.nio.charset.Charset
 
-import akka.actor.{Actor, Props}
-import com.github.nyukhalov.highloadcup.core.{AppLogger, HLService}
 import better.files._
 import com.github.nyukhalov.highloadcup.core.domain._
 import com.github.nyukhalov.highloadcup.core.json.DomainCodec
-import io.circe._, io.circe.parser._
 import io.circe.parser.decode
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future, duration}
 
-object DataLoaderActor {
+class DataLoader(hlService: HLService) extends AppLogger with DomainCodec {
 
-  final case class LoadData(pathToZip: String)
-
-  def props(hLService: HLService): Props = Props(classOf[DataLoaderActor], hLService)
-}
-
-class DataLoaderActor(hlService: HLService) extends Actor with AppLogger with DomainCodec {
-
-  import DataLoaderActor._
+  def loadData(pathToZip: String): Unit = {
+    val workdir = unzipFiles(pathToZip)
+    loadData(workdir)
+    workdir.delete(true)
+  }
 
   private def unzipFiles(pathToZip: String) = {
     val workdir = File.newTemporaryDirectory()
@@ -80,13 +72,5 @@ class DataLoaderActor(hlService: HLService) extends Actor with AppLogger with Do
       }
     }
     logger.info(s"Data loaded successfully: users=$usersLoaded, locations=$locationsLoaded, visits=$visitsLoaded")
-  }
-
-  override def receive: Receive = {
-    case LoadData(pathToZip) =>
-      val workdir = unzipFiles(pathToZip)
-      loadData(workdir)
-      workdir.delete(true)
-      context.stop(self)
   }
 }

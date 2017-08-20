@@ -39,9 +39,27 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
 
   private def isKnownEntity(entity: String) = supportedEntities.contains(entity)
 
-  private def parseId(id: String): Option[Int] = Try {
-    id.toInt
-  } toOption
+  private def isInt(value: String): Boolean = {
+    val len = value.length
+
+    (0 until len).foreach { i =>
+      val c = value.charAt(i)
+      if (i == 0 && c == '-') {}
+      else {
+        val d = Character.digit(c, 10)
+        if (d < 0) return false
+      }
+    }
+
+    true
+  }
+
+  private def parseInt(value: String): Option[Int] = {
+    if (isInt(value)) Some(value.toInt)
+    else None
+  }
+
+  private def parseId(id: String): Option[Int] = parseInt(id)
 
   private def badRequest(ctx: Channel, req: RapidoidHelper) = {
     ctx.write(HTTP_400)
@@ -243,13 +261,15 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
   }
 
   override def handle(ctx: Channel, buf: Buf, req: RapidoidHelper): HttpStatus = {
+//    val s = System.nanoTime()
+
     val uri = BytesUtil.get(buf.bytes(), req.uri)
 
     if (req.isGet.value) {
       req.isKeepAlive.value = true
     }
 
-    if (req.isGet.value) {
+    val res = if (req.isGet.value) {
       val resp = cache.get(uri)
       if (resp.isDefined) {
         json(ctx, req.isKeepAlive.value, resp.get)
@@ -259,6 +279,10 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
     } else {
       handleReq(uri, ctx, buf, req)
     }
+
+//    logger.info(s"$uri processed for ${System.nanoTime() - s}")
+
+    res
   }
 
   private def handleReq(uri: String, ctx: Channel, buf: Buf, req: RapidoidHelper): HttpStatus = {

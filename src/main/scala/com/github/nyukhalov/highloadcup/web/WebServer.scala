@@ -13,7 +13,7 @@ import scala.concurrent.ExecutionContext
 class WebServer(serverPort: Int,
                 val hlService: HLService)
                (implicit actorSystem: ActorSystem, mat: Materializer, ec: ExecutionContext)
-  extends UsersRoute with VisitsRoute with LocationsRoute with AppLogger {
+  extends UsersRoute with VisitsRoute with LocationsRoute with AppLogger with HttpServer {
 
   val route: Route = usersRoute ~ visitsRoute ~ locationsRoute
 

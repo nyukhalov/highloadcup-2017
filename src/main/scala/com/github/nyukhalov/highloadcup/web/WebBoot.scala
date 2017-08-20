@@ -3,14 +3,12 @@ package com.github.nyukhalov.highloadcup.web
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpMethods, HttpRequest}
-import akka.stream.Materializer
+import akka.stream.ActorMaterializer
 import com.github.nyukhalov.highloadcup.core.{AppLogger, DataLoader, HLServiceImpl}
 import com.typesafe.config.ConfigFactory
 
-import scala.concurrent.ExecutionContext
-
 object WebBoot extends AppLogger {
-  def run(implicit actorSystem: ActorSystem, mat: Materializer, ec: ExecutionContext): Unit = {
+  def run(): Unit = {
     val config = ConfigFactory.load()
 
     val pathToZip = config.getString("datazip.path")
@@ -18,8 +16,14 @@ object WebBoot extends AppLogger {
 
     val hlService = new HLServiceImpl()
     new DataLoader(hlService).loadData(pathToZip)
-    new WebServer(serverPort, hlService).start()
 
+//    val httpServer: HttpServer = new WebServer(serverPort, hlService)
+    val httpServer: HttpServer = new RapidoidHttpServer(serverPort, hlService)
+
+    httpServer.start()
+
+    implicit val actorSystem = ActorSystem("ads")
+    implicit val materializer = ActorMaterializer()
     val http = Http()
     (1 to 5).foreach { _ =>
       http.singleRequest(HttpRequest(uri = s"http://localhost:$serverPort/users/1"))

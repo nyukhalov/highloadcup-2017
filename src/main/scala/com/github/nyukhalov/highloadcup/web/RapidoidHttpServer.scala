@@ -1,35 +1,23 @@
-package com.github.nyukhalov.highloadcup.web2
+package com.github.nyukhalov.highloadcup.web
 
 import com.github.nyukhalov.highloadcup.core.domain.{Location, User, Visit}
 import com.github.nyukhalov.highloadcup.core.{DataLoader, HLService, HLServiceImpl}
 import com.github.nyukhalov.highloadcup.web.domain._
 import com.github.nyukhalov.highloadcup.web.json.JsonSupport
 import com.typesafe.config.ConfigFactory
+import io.circe.parser._
 import org.rapidoid.buffer.Buf
 import org.rapidoid.bytes.BytesUtil
-import org.rapidoid.data.JSON
 import org.rapidoid.http._
 import org.rapidoid.http.impl.PathPattern
 import org.rapidoid.net.abstracts.Channel
 import org.rapidoid.net.impl.RapidoidHelper
-import io.circe.parser._
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.util.Try
 
-object Application extends App {
-  val config = ConfigFactory.load()
-
-  val pathToZip = config.getString("datazip.path")
-  val serverPort = config.getInt("server.port")
-
-  val hlService = new HLServiceImpl()
-  new DataLoader(hlService).loadData(pathToZip)
-  new RapidoidHttpServer(hlService).listen(serverPort)
-}
-
-class RapidoidHttpServer(hlService: HLService) extends AbstractHttpServer with JsonSupport {
+class RapidoidHttpServer(serverPort: Int, hlService: HLService) extends AbstractHttpServer with JsonSupport with HttpServer {
   private val HTTP_400 = fullResp(400, "Not Found".getBytes())
 
   private val EMPTY_JSON = "{}".getBytes()
@@ -38,6 +26,11 @@ class RapidoidHttpServer(hlService: HLService) extends AbstractHttpServer with J
 
   private val entityMethodPattern = PathPattern.from("/{entity}/{id}/{method}")
   private val entityPattern = PathPattern.from("/{entity}/{id}")
+
+
+  override def start(): Unit = {
+    listen(serverPort)
+  }
 
   private def isKnownEntity(entity: String) = supportedEntities.contains(entity)
 

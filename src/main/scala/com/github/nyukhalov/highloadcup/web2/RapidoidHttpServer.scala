@@ -91,7 +91,7 @@ class RapidoidHttpServer(hlService: HLService) extends AbstractHttpServer with J
         case _ => NotExist
       }
     } else if (idOpt.isEmpty) {
-      Validation
+      NotExist
     } else if (!isKnownEntity(entity)) {
       NotExist
     } else {
@@ -136,7 +136,8 @@ class RapidoidHttpServer(hlService: HLService) extends AbstractHttpServer with J
     val q = BytesUtil.get(buf.bytes(), req.query)
     val m = mutable.Map[String, String]()
     if (q.nonEmpty) {
-      q.split("&").foreach(kv => {
+      val decoded = java.net.URLDecoder.decode(q, "UTF-8")
+      decoded.split("&").foreach(kv => {
         val kvs = kv.split("=")
         m += (kvs(0) -> kvs(1))
       })
@@ -162,12 +163,34 @@ class RapidoidHttpServer(hlService: HLService) extends AbstractHttpServer with J
           else {
             val params = getParams(buf, req)
 
-            val fromDate = params.get("fromDate").flatMap(s => Try { s.toLong }.toOption)
-            val toDate = params.get("toDate").flatMap(s => Try { s.toLong }.toOption)
-            val country = params.get("country")
-            val toDistance = params.get("toDistance").flatMap(s => Try { s.toInt }.toOption)
+            try {
+              val fromDate = params.get("fromDate").map(s => s.toLong)
+              val toDate = params.get("toDate").map(s => s.toLong)
+              val country = params.get("country")
+              val toDistance = params.get("toDistance").map(s => s.toInt)
 
-            hlService.getUserVisits(id, fromDate, toDate, country, toDistance)
+              hlService.getUserVisits(id, fromDate, toDate, country, toDistance)
+            } catch {
+              case _: NumberFormatException => Validation
+            }
+          }
+
+        case ("locations", "avg") =>
+          if (!req.isGet.value) NotExist
+          else {
+            val params = getParams(buf, req)
+
+            try {
+              val fromDate = params.get("fromDate").map(s => s.toLong)
+              val toDate = params.get("toDate").map(s => s.toLong)
+              val fromAge = params.get("fromAge").map(s => s.toInt)
+              val toAge = params.get("toAge").map(s => s.toInt)
+              val gender = params.get("gender")
+
+              hlService.getAverageRating(id, fromDate, toDate, fromAge, toAge, gender)
+            } catch {
+              case _: NumberFormatException => Validation
+            }
           }
 
         case _ => NotExist

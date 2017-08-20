@@ -10,7 +10,9 @@ final case class VisitUpdate(location: Option[Int], user: Option[Int], visitedAt
 final case class LocationUpdate(place: Option[String], country: Option[String], city: Option[String], distance: Option[Int])
 
 // other
-final case class LocAvgRating(avg: Float)
+final case class LocAvgRating(avg: Float) {
+  def getAvg = avg
+}
 final case class UserVisits(visits: List[UserVisit]) {
   import scala.collection.JavaConverters._
   def getVisits = visits.asJava

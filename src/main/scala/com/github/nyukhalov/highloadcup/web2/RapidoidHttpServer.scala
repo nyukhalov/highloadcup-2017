@@ -1,5 +1,6 @@
 package com.github.nyukhalov.highloadcup.web2
 
+import com.github.nyukhalov.highloadcup.core.domain.{Location, User, Visit}
 import com.github.nyukhalov.highloadcup.core.{DataLoader, HLService, HLServiceImpl}
 import com.github.nyukhalov.highloadcup.web.domain._
 import com.github.nyukhalov.highloadcup.web.json.JsonSupport
@@ -98,7 +99,51 @@ class RapidoidHttpServer(hlService: HLService) extends AbstractHttpServer with J
   }
 
   private def handleEntityMethodRequest(ctx: Channel, buf: Buf, req: RapidoidHelper, params: mutable.Map[String, String]) = {
-    toResponse(ctx, req, NotExist)
+    val method = params("method")
+    val entity = params("entity")
+    val strId = params("id")
+    val idOpt = parseId(strId)
+
+    val resp = if (idOpt.isEmpty) {
+      Validation
+    } else if (!isKnownEntity(entity)) {
+      NotExist
+    } else {
+      (entity, method) match {
+        case ("users", "new") =>
+          if (req.isGet.value) NotExist
+          else {
+            val body = BytesUtil.get(buf.bytes(), req.body)
+            decode[User](body) match {
+              case Left(_) => Validation
+              case Right(user) => hlService.createUser(user)
+            }
+          }
+
+        case ("visits", "new") =>
+          if (req.isGet.value) NotExist
+          else {
+            val body = BytesUtil.get(buf.bytes(), req.body)
+            decode[Visit](body) match {
+              case Left(_) => Validation
+              case Right(visit) => hlService.createVisit(visit)
+            }
+          }
+
+        case ("locations", "new") =>
+          if (req.isGet.value) NotExist
+          else {
+            val body = BytesUtil.get(buf.bytes(), req.body)
+            decode[Location](body) match {
+              case Left(_) => Validation
+              case Right(loc) => hlService.createLocation(loc)
+            }
+          }
+
+        case _ => NotExist
+      }
+    }
+    toResponse(ctx, req, resp)
   }
 
   private def toResponse(ctx: Channel, req: RapidoidHelper, resp: Any): HttpStatus = {

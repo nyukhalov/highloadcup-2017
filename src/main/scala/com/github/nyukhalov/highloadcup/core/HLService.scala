@@ -61,6 +61,8 @@ class HLServiceImpl extends HLService with AppLogger {
   val locId2Visits: mutable.Map[Int, mutable.Set[Visit]] = new ConcurrentHashMap[Int, mutable.Set[Visit]]() asScala
   val userId2Visits: mutable.Map[Int, mutable.SortedSet[Visit]] = new ConcurrentHashMap[Int, mutable.SortedSet[Visit]]() asScala
 
+  val now = DateTime.now(DateTimeZone.UTC).withTimeAtStartOfDay()
+
   implicit val visitOrdering: Ordering[Visit] = (x: Visit, y: Visit) => {
     if (x.visitedAt < y.visitedAt) -1
     else if (x.visitedAt > y.visitedAt) 1
@@ -191,8 +193,6 @@ class HLServiceImpl extends HLService with AppLogger {
     if (!isValidParams(fromDate, toDate, fromAge, toAge, gender)) {
       Validation
     } else {
-
-      val now = DateTime.now(DateTimeZone.UTC).withTimeAtStartOfDay()
 
       val fromBirthDate = toAge.map(ta => now.minusYears(ta).getMillis / 1000)
       val toBirthDate = fromAge.map(fa => now.minusYears(fa).getMillis / 1000)

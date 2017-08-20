@@ -3,13 +3,14 @@ package com.github.nyukhalov.highloadcup.web
 import java.util.concurrent.{Executors, TimeUnit}
 
 import better.files.File
-import com.github.nyukhalov.highloadcup.core.{AppLogger, DataLoader, HLServiceImpl}
+import com.github.nyukhalov.highloadcup.core.{AppLogger, DataLoader, HLService, HLServiceImpl}
 import com.typesafe.config.ConfigFactory
 import org.rapidoid.http.{HTTP, HttpClient}
 
 import scala.concurrent.duration._
 
 object WebBoot extends AppLogger {
+
   def run(): Unit = {
     val config = ConfigFactory.load()
 
@@ -24,6 +25,11 @@ object WebBoot extends AppLogger {
     val server = new RapidoidHttpServer(serverPort, hlService)
     server.start()
 
+    warmUpCache(server, hlService)
+    warmUpJVM(serverPort)
+  }
+
+  def warmUpCache(server: RapidoidHttpServer, hlService: HLServiceImpl) = {
     val s = System.currentTimeMillis()
 
     hlService.userMap.foreach{ case (id, user) => {
@@ -35,7 +41,18 @@ object WebBoot extends AppLogger {
     hlService.visitMap.foreach { case (id, visit) => {
       server.warmupCache(s"/visits/$id", visit)
     }}
-    logger.info(s"Warmed up for ${System.currentTimeMillis() - s} ms")
+    logger.info(s"Warmed up Cache for ${System.currentTimeMillis() - s} ms")
+  }
+
+  def warmUpJVM(serverPort: Int): Unit = {
+    val s = System.currentTimeMillis()
+    val c = HTTP.client()
+    c.req().get(s"http://localhost:$serverPort/users/1").execute()
+    c.req().get(s"http://localhost:$serverPort/users/1/visits").execute()
+    c.req().get(s"http://localhost:$serverPort/visits/1").execute()
+    c.req().get(s"http://localhost:$serverPort/locations/1").execute()
+    c.req().get(s"http://localhost:$serverPort/locations/1/avg").execute()
+    logger.info(s"Warmed up JVM for ${System.currentTimeMillis() - s} ms")
   }
 
   private def getWarmupTime(pathToOption: String) = {

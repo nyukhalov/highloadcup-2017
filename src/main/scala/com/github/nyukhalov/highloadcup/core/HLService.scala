@@ -58,13 +58,21 @@ class HLServiceImpl extends HLService with AppLogger {
   val userMap: mutable.Map[Int, User] = new ConcurrentHashMap[Int, User]() asScala
   val visitMap: mutable.Map[Int, Visit] = new ConcurrentHashMap[Int, Visit]() asScala
   val locMap: mutable.Map[Int, Location] = new ConcurrentHashMap[Int, Location]() asScala
-  val locId2VisitIds: mutable.Map[Int, mutable.Set[Int]] = new ConcurrentHashMap[Int, mutable.Set[Int]]() asScala
-  val userId2VisitIds: mutable.Map[Int, mutable.Set[Int]] = new ConcurrentHashMap[Int, mutable.Set[Int]]() asScala
+  val locId2Visits: mutable.Map[Int, mutable.SortedSet[Visit]] = new ConcurrentHashMap[Int, mutable.SortedSet[Visit]]() asScala
+  val userId2Visits: mutable.Map[Int, mutable.SortedSet[Visit]] = new ConcurrentHashMap[Int, mutable.SortedSet[Visit]]() asScala
 
-  def createConcurrentSet[T](): mutable.Set[T] = {
-    import scala.collection.JavaConverters._
-    java.util.Collections.newSetFromMap(
-      new java.util.concurrent.ConcurrentHashMap[T, java.lang.Boolean]).asScala
+  implicit val visitOrdering: Ordering[Visit] = (x: Visit, y: Visit) => {
+    if (x.visitedAt < y.visitedAt) -1
+    else if (x.visitedAt > y.visitedAt) 1
+    else 0
+  }
+
+  def createConcurrentSet[T]()(implicit ordering: Ordering[T]): mutable.SortedSet[T] = {
+//    import scala.collection.JavaConverters._
+//    java.util.Collections.newSetFromMap(
+//      new java.util.concurrent.ConcurrentHashMap[T, java.lang.Boolean]).asScala
+
+    new mutable.TreeSet()(ordering)
   }
 
   private def cacheGetVisit(id: Int): Option[Visit] = visitMap.get(id)
@@ -82,8 +90,8 @@ class HLServiceImpl extends HLService with AppLogger {
     }
     else {
       visitMap += (visit.id -> visit)
-      locId2VisitIds(visit.location).add(visit.id)
-      userId2VisitIds(visit.user).add(visit.id)
+      locId2Visits(visit.location).add(visit)
+      userId2Visits(visit.user).add(visit)
       SuccessfulOperation
     }
   }
@@ -120,15 +128,19 @@ class HLServiceImpl extends HLService with AppLogger {
 
             // location was updated
             if (v.location != updatedVisit.location) {
-              locId2VisitIds(v.location).remove(id)
-              locId2VisitIds(updatedVisit.location).add(id)
+              locId2Visits(v.location).remove(v)
+            } else {
+              locId2Visits(updatedVisit.location).remove(v)
             }
+            locId2Visits(updatedVisit.location).add(updatedVisit)
 
             // user was updated
             if (v.user != updatedVisit.user) {
-              userId2VisitIds(v.user).remove(id)
-              userId2VisitIds(updatedVisit.user).add(id)
+              userId2Visits(v.user).remove(v)
+            } else {
+              userId2Visits(updatedVisit.user).remove(v)
             }
+            userId2Visits(updatedVisit.user).add(updatedVisit)
 
             visitMap += (id -> updatedVisit)
 
@@ -152,7 +164,7 @@ class HLServiceImpl extends HLService with AppLogger {
       Validation
     } else {
       locMap += (location.id -> location)
-      locId2VisitIds += (location.id -> createConcurrentSet())
+      locId2Visits += (location.id -> createConcurrentSet())
       SuccessfulOperation
     }
   }
@@ -183,14 +195,12 @@ class HLServiceImpl extends HLService with AppLogger {
       val fromBirthDate = toAge.map(ta => now.minusYears(ta).getMillis / 1000)
       val toBirthDate = fromAge.map(fa => now.minusYears(fa).getMillis / 1000)
 
-      locId2VisitIds.get(locId) match {
+      locId2Visits.get(locId) match {
         case None => NotExist
 
-        case Some(visitIds) =>
-          var visits = visitIds
-            .map(visitMap(_))
+        case Some(visitSet) =>
+          var visits = visitSet.toList
             .map(v => (v, userMap(v.user)))
-            .toList
 
           fromDate.foreach(from => visits = visits.filter(_._1.visitedAt > from))
           toDate.foreach(to => visits = visits.filter(_._1.visitedAt < to))
@@ -261,7 +271,7 @@ class HLServiceImpl extends HLService with AppLogger {
       Validation
     } else {
       userMap += (user.id -> user)
-      userId2VisitIds += (user.id -> createConcurrentSet())
+      userId2Visits += (user.id -> createConcurrentSet())
       SuccessfulOperation
     }
   }
@@ -316,18 +326,28 @@ class HLServiceImpl extends HLService with AppLogger {
     if (!isUserExist(id)) {
       NotExist
     } else {
-      var visits = userId2VisitIds(id).toList
-        .map(visitMap(_))
+      logger.info("-----")
+      var s = System.nanoTime()
+      var visits = userId2Visits(id).toList
         .map(v => (v, locMap(v.location)))
+
+      val fetchingTime = System.nanoTime() - s
+      s = System.nanoTime()
 
       fromDate.foreach(from => visits = visits.filter(_._1.visitedAt > from))
       toDate.foreach(to => visits = visits.filter(_._1.visitedAt < to))
       country.foreach(c => visits = visits.filter(_._2.country == c))
       toDistance.foreach(d => visits = visits.filter(_._2.distance < d))
 
+      val filteringTime = System.nanoTime() - s
+      s = System.nanoTime()
+
       val res = visits
         .map(v => UserVisit(v._1.mark, v._1.visitedAt, v._2.place))
-        .sortBy(_.visitedAt)
+
+      val soringTime = System.nanoTime() - s
+
+      logger.info(s"time: fetch=$fetchingTime, filter=$filteringTime, sort=$soringTime ns")
 
       UserVisits(res)
     }

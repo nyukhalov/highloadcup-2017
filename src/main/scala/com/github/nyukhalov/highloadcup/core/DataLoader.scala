@@ -40,7 +40,7 @@ class DataLoader(hlService: HLService) extends AppLogger with DomainCodec {
       val entityName = x.name.split("_")(0)
       (x, entity2loadPriority(entityName))
     }).sortBy(_._2).foreach { case (f, _) =>
-      logger.info(s"Read file: $f")
+      logger.debug(s"Read file: $f")
 
       val content = f.contentAsString(charset = Charset.forName("UTF-8"))
 

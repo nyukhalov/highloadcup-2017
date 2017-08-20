@@ -58,7 +58,7 @@ class HLServiceImpl extends HLService with AppLogger {
   val userMap: mutable.Map[Int, User] = new ConcurrentHashMap[Int, User]() asScala
   val visitMap: mutable.Map[Int, Visit] = new ConcurrentHashMap[Int, Visit]() asScala
   val locMap: mutable.Map[Int, Location] = new ConcurrentHashMap[Int, Location]() asScala
-  val locId2Visits: mutable.Map[Int, mutable.SortedSet[Visit]] = new ConcurrentHashMap[Int, mutable.SortedSet[Visit]]() asScala
+  val locId2Visits: mutable.Map[Int, mutable.Set[Visit]] = new ConcurrentHashMap[Int, mutable.Set[Visit]]() asScala
   val userId2Visits: mutable.Map[Int, mutable.SortedSet[Visit]] = new ConcurrentHashMap[Int, mutable.SortedSet[Visit]]() asScala
 
   implicit val visitOrdering: Ordering[Visit] = (x: Visit, y: Visit) => {
@@ -67,11 +67,13 @@ class HLServiceImpl extends HLService with AppLogger {
     else 0
   }
 
-  def createConcurrentSet[T]()(implicit ordering: Ordering[T]): mutable.SortedSet[T] = {
-//    import scala.collection.JavaConverters._
-//    java.util.Collections.newSetFromMap(
-//      new java.util.concurrent.ConcurrentHashMap[T, java.lang.Boolean]).asScala
+  def createConcurrentSet[T](): mutable.Set[T] = {
+    import scala.collection.JavaConverters._
+    java.util.Collections.newSetFromMap(
+      new java.util.concurrent.ConcurrentHashMap[T, java.lang.Boolean]).asScala
+  }
 
+  def createTreeSet[T]()(implicit ordering: Ordering[T]): mutable.SortedSet[T] = {
     new mutable.TreeSet()(ordering)
   }
 
@@ -271,7 +273,7 @@ class HLServiceImpl extends HLService with AppLogger {
       Validation
     } else {
       userMap += (user.id -> user)
-      userId2Visits += (user.id -> createConcurrentSet())
+      userId2Visits += (user.id -> createTreeSet())
       SuccessfulOperation
     }
   }

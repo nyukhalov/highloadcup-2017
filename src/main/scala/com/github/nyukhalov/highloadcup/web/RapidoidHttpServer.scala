@@ -1,6 +1,7 @@
 package com.github.nyukhalov.highloadcup.web
 
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 
 import com.github.nyukhalov.highloadcup.core.domain.{Location, User, Visit}
 import com.github.nyukhalov.highloadcup.core.{AppLogger, HLService}
@@ -32,6 +33,8 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
   private val entityPattern = PathPattern.from("/{entity}/{id}")
 
   private val cache: mutable.Map[String, Array[Byte]] = new ConcurrentHashMap[String, Array[Byte]]().asScala
+
+  private val heavyMethodCachingEnabled = new AtomicBoolean(false)
 
   override def start(): Unit = {
     listen(serverPort)
@@ -196,6 +199,7 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
     val entity = params("entity")
     val strId = params("id")
     val idOpt = parseId(strId)
+    var cacheIt = false
 
     val resp = if (idOpt.isEmpty) {
       Validation
@@ -215,7 +219,13 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
               val country = params.get("country")
               val toDistance = params.get("toDistance").map(s => s.toInt)
 
-              hlService.getUserVisits(id, fromDate, toDate, country, toDistance)
+              hlService.getUserVisits(id, fromDate, toDate, country, toDistance) match {
+                case uv: UserVisits =>
+                  cacheIt = heavyMethodCachingEnabled.get()
+                  uv
+
+                case another => another
+              }
             } catch {
               case _: NumberFormatException => Validation
             }
@@ -233,7 +243,13 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
               val toAge = params.get("toAge").map(s => s.toInt)
               val gender = params.get("gender")
 
-              hlService.getAverageRating(id, fromDate, toDate, fromAge, toAge, gender)
+              hlService.getAverageRating(id, fromDate, toDate, fromAge, toAge, gender) match {
+                case avg: LocAvgRating =>
+                  cacheIt = heavyMethodCachingEnabled.get()
+                  avg
+
+                case another => another
+              }
             } catch {
               case _: NumberFormatException => Validation
             }
@@ -242,7 +258,7 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
         case _ => NotExist
       }
     }
-    toResponse(uri, ctx, req, resp)
+    toResponse(uri, ctx, req, resp, cacheIt)
   }
 
   private def toResponse(uri: String, ctx: Channel, req: RapidoidHelper, resp: Any, cacheIt: Boolean = false): HttpStatus = {
@@ -262,6 +278,12 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
 
   override def handle(ctx: Channel, buf: Buf, req: RapidoidHelper): HttpStatus = {
 //    val s = System.nanoTime()
+
+    if (!req.isGet.value && !heavyMethodCachingEnabled.get()) {
+      logger.info("Enable caching of heavy methods")
+      // предполагается что после ПОСТ фазы можно кэшировать сложные запросы
+      heavyMethodCachingEnabled.set(true)
+    }
 
     val uri = BytesUtil.get(buf.bytes(), req.uri)
 

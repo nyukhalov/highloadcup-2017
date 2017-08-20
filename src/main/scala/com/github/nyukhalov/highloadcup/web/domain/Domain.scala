@@ -11,8 +11,15 @@ final case class LocationUpdate(place: Option[String], country: Option[String], 
 
 // other
 final case class LocAvgRating(avg: Float)
-final case class UserVisits(visits: List[UserVisit])
-final case class UserVisit(mark: Int, visitedAt: Long, place: String)
+final case class UserVisits(visits: List[UserVisit]) {
+  import scala.collection.JavaConverters._
+  def getVisits = visits.asJava
+}
+final case class UserVisit(mark: Int, visitedAt: Long, place: String) {
+  def getMark = mark
+  def getVisited_at = visitedAt
+  def getPlace = place
+}
 
 
 // model

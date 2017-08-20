@@ -56,7 +56,41 @@ class RapidoidHttpServer(hlService: HLService) extends AbstractHttpServer with J
     val strId = params("id")
     val idOpt = parseId(strId)
 
-    val resp = if (idOpt.isEmpty) {
+    val resp = if (strId == "new") {
+      entity match {
+        case ("users") =>
+          if (req.isGet.value) NotExist
+          else {
+            val body = BytesUtil.get(buf.bytes(), req.body)
+            decode[User](body) match {
+              case Left(_) => Validation
+              case Right(user) => hlService.createUser(user)
+            }
+          }
+
+        case ("visits") =>
+          if (req.isGet.value) NotExist
+          else {
+            val body = BytesUtil.get(buf.bytes(), req.body)
+            decode[Visit](body) match {
+              case Left(_) => Validation
+              case Right(visit) => hlService.createVisit(visit)
+            }
+          }
+
+        case ("locations") =>
+          if (req.isGet.value) NotExist
+          else {
+            val body = BytesUtil.get(buf.bytes(), req.body)
+            decode[Location](body) match {
+              case Left(_) => Validation
+              case Right(loc) => hlService.createLocation(loc)
+            }
+          }
+
+        case _ => NotExist
+      }
+    } else if (idOpt.isEmpty) {
       Validation
     } else if (!isKnownEntity(entity)) {
       NotExist
@@ -98,6 +132,18 @@ class RapidoidHttpServer(hlService: HLService) extends AbstractHttpServer with J
     toResponse(ctx, req, resp)
   }
 
+  private def getParams(buf: Buf, req: RapidoidHelper) = {
+    val q = BytesUtil.get(buf.bytes(), req.query)
+    val m = mutable.Map[String, String]()
+    if (q.nonEmpty) {
+      q.split("&").foreach(kv => {
+        val kvs = kv.split("=")
+        m += (kvs(0) -> kvs(1))
+      })
+    }
+    m
+  }
+
   private def handleEntityMethodRequest(ctx: Channel, buf: Buf, req: RapidoidHelper, params: mutable.Map[String, String]) = {
     val method = params("method")
     val entity = params("entity")
@@ -109,35 +155,19 @@ class RapidoidHttpServer(hlService: HLService) extends AbstractHttpServer with J
     } else if (!isKnownEntity(entity)) {
       NotExist
     } else {
+      val id = idOpt.get
       (entity, method) match {
-        case ("users", "new") =>
-          if (req.isGet.value) NotExist
+        case ("users", "visits") =>
+          if (!req.isGet.value) NotExist
           else {
-            val body = BytesUtil.get(buf.bytes(), req.body)
-            decode[User](body) match {
-              case Left(_) => Validation
-              case Right(user) => hlService.createUser(user)
-            }
-          }
+            val params = getParams(buf, req)
 
-        case ("visits", "new") =>
-          if (req.isGet.value) NotExist
-          else {
-            val body = BytesUtil.get(buf.bytes(), req.body)
-            decode[Visit](body) match {
-              case Left(_) => Validation
-              case Right(visit) => hlService.createVisit(visit)
-            }
-          }
+            val fromDate = params.get("fromDate").flatMap(s => Try { s.toLong }.toOption)
+            val toDate = params.get("toDate").flatMap(s => Try { s.toLong }.toOption)
+            val country = params.get("country")
+            val toDistance = params.get("toDistance").flatMap(s => Try { s.toInt }.toOption)
 
-        case ("locations", "new") =>
-          if (req.isGet.value) NotExist
-          else {
-            val body = BytesUtil.get(buf.bytes(), req.body)
-            decode[Location](body) match {
-              case Left(_) => Validation
-              case Right(loc) => hlService.createLocation(loc)
-            }
+            hlService.getUserVisits(id, fromDate, toDate, country, toDistance)
           }
 
         case _ => NotExist

@@ -10,25 +10,18 @@ resolvers ++= Seq(
 )
 resolvers += Resolver.bintrayRepo("hseeberger", "maven")
 
-libraryDependencies += "org.typelevel" %% "cats" % "0.9.0"
 libraryDependencies ++= Seq(
-  "com.typesafe.akka"           %% "akka-actor"             % "2.5.3",
-  "com.typesafe.akka"           %% "akka-stream"            % "2.5.3",
-  "com.typesafe.akka"           %% "akka-http"              % "10.0.9",
   "com.typesafe"                %  "config"                 % "1.3.1",
   "ch.qos.logback"              %  "logback-classic"        % "1.2.3",
   "com.typesafe.scala-logging"  %% "scala-logging"          % "3.7.2",
   "com.github.pathikrit" %% "better-files" % "3.0.0",
   "joda-time" % "joda-time" % "2.9.9",
-  "de.heikoseeberger" %% "akka-http-circe" % "1.18.0",
   "io.circe"                %% "circe-core"             % "0.8.0",
   "io.circe"                %% "circe-generic"          % "0.8.0",
   "io.circe"                %% "circe-parser"           % "0.8.0",
   "org.rapidoid" % "rapidoid-http-fast" % "5.4.2",
+  "org.rapidoid" % "rapidoid-http-client" % "5.4.2",
 
-  "com.typesafe.akka" %% "akka-testkit" % "2.5.3" % Test,
-  "com.typesafe.akka" %% "akka-stream-testkit" % "2.5.3" % Test,
-  "com.typesafe.akka" %% "akka-http-testkit" % "10.0.9" % Test,
   "org.specs2" %% "specs2-core" % "3.9.1" % "test",
   "org.specs2" %% "specs2-mock" % "3.9.1" % "test"
 )

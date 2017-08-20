@@ -1,11 +1,8 @@
 package com.github.nyukhalov.highloadcup.web
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpMethods, HttpRequest}
-import akka.stream.ActorMaterializer
 import com.github.nyukhalov.highloadcup.core.{AppLogger, DataLoader, HLServiceImpl}
 import com.typesafe.config.ConfigFactory
+import org.rapidoid.http.HTTP
 
 object WebBoot extends AppLogger {
   def run(): Unit = {
@@ -17,25 +14,13 @@ object WebBoot extends AppLogger {
     val hlService = new HLServiceImpl()
     new DataLoader(hlService).loadData(pathToZip)
 
-//    val httpServer: HttpServer = new WebServer(serverPort, hlService)
-    val httpServer: HttpServer = new RapidoidHttpServer(serverPort, hlService)
+    new RapidoidHttpServer(serverPort, hlService).start()
 
-    httpServer.start()
-
-    implicit val actorSystem = ActorSystem("ads")
-    implicit val materializer = ActorMaterializer()
-    val http = Http()
-    (1 to 5).foreach { _ =>
-      http.singleRequest(HttpRequest(uri = s"http://localhost:$serverPort/users/1"))
-      http.singleRequest(HttpRequest(uri = s"http://localhost:$serverPort/locations/1"))
-      http.singleRequest(HttpRequest(uri = s"http://localhost:$serverPort/visits/1"))
-      http.singleRequest(HttpRequest(uri = s"http://localhost:$serverPort/users/1/visits"))
-      http.singleRequest(HttpRequest(uri = s"http://localhost:$serverPort/locations/1/avg"))
-
-      val emptyJson = HttpEntity(ContentTypes.`application/json`, "{}".getBytes)
-      http.singleRequest(HttpRequest(method = HttpMethods.POST, uri = s"http://localhost:$serverPort/users/1/new", entity = emptyJson))
-      http.singleRequest(HttpRequest(method = HttpMethods.POST, uri = s"http://localhost:$serverPort/visits/1/new", entity = emptyJson))
-      http.singleRequest(HttpRequest(method = HttpMethods.POST, uri = s"http://localhost:$serverPort/locations/1/new", entity = emptyJson))
-    }
+    val c = HTTP.client()
+    c.req().get(s"http://localhost:$serverPort/users/1")
+    c.req().get(s"http://localhost:$serverPort/visits/1")
+    c.req().get(s"http://localhost:$serverPort/users/1")
+    c.req().get(s"http://localhost:$serverPort/users/1/visits")
+    c.req().get(s"http://localhost:$serverPort/locations/1/avg")
   }
 }

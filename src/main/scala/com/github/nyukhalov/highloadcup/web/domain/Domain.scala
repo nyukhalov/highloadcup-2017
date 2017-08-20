@@ -1,9 +1,5 @@
 package com.github.nyukhalov.highloadcup.web.domain
 
-// rest messages
-trait RestMessage
-trait RestRequest
-
 // for updating
 final case class UserUpdate(email: Option[String], firstName: Option[String], lastName: Option[String], gender: Option[String], birthDate: Option[Long])
 final case class VisitUpdate(location: Option[Int], user: Option[Int], visitedAt: Option[Long], mark: Option[Int])

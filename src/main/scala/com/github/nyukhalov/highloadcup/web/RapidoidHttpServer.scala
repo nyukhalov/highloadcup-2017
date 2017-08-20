@@ -4,7 +4,6 @@ import com.github.nyukhalov.highloadcup.core.domain.{Location, User, Visit}
 import com.github.nyukhalov.highloadcup.core.{DataLoader, HLService, HLServiceImpl}
 import com.github.nyukhalov.highloadcup.web.domain._
 import com.github.nyukhalov.highloadcup.web.json.JsonSupport
-import com.typesafe.config.ConfigFactory
 import io.circe.parser._
 import org.rapidoid.buffer.Buf
 import org.rapidoid.bytes.BytesUtil
@@ -18,11 +17,12 @@ import scala.collection.mutable
 import scala.util.Try
 
 class RapidoidHttpServer(serverPort: Int, hlService: HLService) extends AbstractHttpServer with JsonSupport with HttpServer {
-  private val HTTP_400 = fullResp(400, "Not Found".getBytes())
+  private val HTTP_400 = fullResp(400, "nf".getBytes())
 
   private val EMPTY_JSON = "{}".getBytes()
 
   private val supportedEntities = Set("users", "locations", "visits")
+  private val EmptyParams = mutable.Map[String, String]()
 
   private val entityMethodPattern = PathPattern.from("/{entity}/{id}/{method}")
   private val entityPattern = PathPattern.from("/{entity}/{id}")
@@ -127,15 +127,16 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService) extends Abstract
 
   private def getParams(buf: Buf, req: RapidoidHelper) = {
     val q = BytesUtil.get(buf.bytes(), req.query)
-    val m = mutable.Map[String, String]()
-    if (q.nonEmpty) {
+    if (q.isEmpty) EmptyParams
+    else {
+      val m = mutable.Map[String, String]()
       val decoded = java.net.URLDecoder.decode(q, "UTF-8")
       decoded.split("&").foreach(kv => {
         val kvs = kv.split("=")
         m += (kvs(0) -> kvs(1))
       })
+      m
     }
-    m
   }
 
   private def handleEntityMethodRequest(ctx: Channel, buf: Buf, req: RapidoidHelper, params: mutable.Map[String, String]) = {

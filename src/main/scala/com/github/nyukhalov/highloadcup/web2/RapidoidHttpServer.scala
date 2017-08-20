@@ -1,14 +1,17 @@
 package com.github.nyukhalov.highloadcup.web2
 
 import com.github.nyukhalov.highloadcup.core.{DataLoader, HLService, HLServiceImpl}
-import com.github.nyukhalov.highloadcup.web.domain.{NotExist, SuccessfulOperation, Validation}
+import com.github.nyukhalov.highloadcup.web.domain._
+import com.github.nyukhalov.highloadcup.web.json.JsonSupport
 import com.typesafe.config.ConfigFactory
 import org.rapidoid.buffer.Buf
 import org.rapidoid.bytes.BytesUtil
+import org.rapidoid.data.JSON
 import org.rapidoid.http._
 import org.rapidoid.http.impl.PathPattern
 import org.rapidoid.net.abstracts.Channel
 import org.rapidoid.net.impl.RapidoidHelper
+import io.circe.parser._
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -25,8 +28,8 @@ object Application extends App {
   new RapidoidHttpServer(hlService).listen(serverPort)
 }
 
-class RapidoidHttpServer(hlService: HLService) extends AbstractHttpServer {
-  private val HTTP_400 = HttpResponseCodes.get(400)
+class RapidoidHttpServer(hlService: HLService) extends AbstractHttpServer with JsonSupport {
+  private val HTTP_400 = fullResp(400, "Not Found".getBytes())
 
   private val EMPTY_JSON = "{}".getBytes()
 
@@ -62,27 +65,43 @@ class RapidoidHttpServer(hlService: HLService) extends AbstractHttpServer {
         case "users" =>
           if (req.isGet.value) hlService.getUser(id)
           else {
-            // TODO: parse user update from req
-            val userUpdate = ???
-            hlService.updateUser(id, userUpdate)
+            val body = BytesUtil.get(buf.bytes(), req.body)
+            decode[UserUpdate](body) match {
+              case Left(_) => Validation
+              case Right(userUpdate) => hlService.updateUser(id, userUpdate)
+            }
           }
 
         case "visits" =>
           if (req.isGet.value) hlService.getVisit(id)
           else {
-            val visitUpdate = ???
-            hlService.updateVisit(id, visitUpdate)
+            val body = BytesUtil.get(buf.bytes(), req.body)
+            decode[VisitUpdate](body) match {
+              case Left(_) => Validation
+              case Right(visitUpdate) => hlService.updateVisit(id, visitUpdate)
+            }
           }
 
         case "locations" =>
           if (req.isGet.value) hlService.getLocation(id)
           else {
-            val locUpdate = ???
-            hlService.updateLocation(id, locUpdate)
+            val body = BytesUtil.get(buf.bytes(), req.body)
+            decode[LocationUpdate](body) match {
+              case Left(_) => Validation
+              case Right(locUpdate) => hlService.updateLocation(id, locUpdate)
+            }
           }
       }
     }
 
+    toResponse(ctx, req, resp)
+  }
+
+  private def handleEntityMethodRequest(ctx: Channel, buf: Buf, req: RapidoidHelper, params: mutable.Map[String, String]) = {
+    toResponse(ctx, req, NotExist)
+  }
+
+  private def toResponse(ctx: Channel, req: RapidoidHelper, resp: Any): HttpStatus = {
     resp match {
       case NotExist => HttpStatus.NOT_FOUND
       case Validation => badRequest(ctx, req)
@@ -91,10 +110,6 @@ class RapidoidHttpServer(hlService: HLService) extends AbstractHttpServer {
         serializeToJson(HttpUtils.noReq(), ctx, req.isKeepAlive.value, x)
       }
     }
-  }
-
-  private def handleEntityMethodRequest(ctx: Channel, buf: Buf, req: RapidoidHelper, params: mutable.Map[String, String]) = {
-    HttpStatus.ERROR
   }
 
   override def handle(ctx: Channel, buf: Buf, req: RapidoidHelper): HttpStatus = {

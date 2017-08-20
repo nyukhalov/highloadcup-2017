@@ -3,7 +3,6 @@ package com.github.nyukhalov.highloadcup.web
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpMethods, HttpRequest}
-import akka.http.scaladsl.server.ContentNegotiator.Alternative.ContentType
 import akka.stream.Materializer
 import com.github.nyukhalov.highloadcup.core.{AppLogger, DataLoader, HLServiceImpl}
 import com.typesafe.config.ConfigFactory

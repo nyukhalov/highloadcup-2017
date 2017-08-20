@@ -11,7 +11,6 @@ final case class LocationUpdate(place: Option[String], country: Option[String], 
 
 // other
 final case class LocAvgRating(avg: Float)
-final case class GetUserVisits(id: Int, fromDate: Option[Long], toDate: Option[Long], country: Option[String], toDistance: Option[Int]) extends RestRequest
 final case class UserVisits(visits: List[UserVisit])
 final case class UserVisit(mark: Int, visitedAt: Long, place: String)
 

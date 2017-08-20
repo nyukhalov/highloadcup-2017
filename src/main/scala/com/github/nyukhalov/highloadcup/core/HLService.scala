@@ -328,28 +328,16 @@ class HLServiceImpl extends HLService with AppLogger {
     if (!isUserExist(id)) {
       NotExist
     } else {
-      logger.info("-----")
-      var s = System.nanoTime()
       var visits = userId2Visits(id).toList
         .map(v => (v, locMap(v.location)))
-
-      val fetchingTime = System.nanoTime() - s
-      s = System.nanoTime()
 
       fromDate.foreach(from => visits = visits.filter(_._1.visitedAt > from))
       toDate.foreach(to => visits = visits.filter(_._1.visitedAt < to))
       country.foreach(c => visits = visits.filter(_._2.country == c))
       toDistance.foreach(d => visits = visits.filter(_._2.distance < d))
 
-      val filteringTime = System.nanoTime() - s
-      s = System.nanoTime()
-
       val res = visits
         .map(v => UserVisit(v._1.mark, v._1.visitedAt, v._2.place))
-
-      val soringTime = System.nanoTime() - s
-
-      logger.info(s"time: fetch=$fetchingTime, filter=$filteringTime, sort=$soringTime ns")
 
       UserVisits(res)
     }

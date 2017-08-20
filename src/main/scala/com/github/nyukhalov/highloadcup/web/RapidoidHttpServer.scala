@@ -246,6 +246,10 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
     val uri = BytesUtil.get(buf.bytes(), req.uri)
 
     if (req.isGet.value) {
+      req.isKeepAlive.value = true
+    }
+
+    if (req.isGet.value) {
       val resp = cache.get(uri)
       if (resp.isDefined) {
         json(ctx, req.isKeepAlive.value, resp.get)

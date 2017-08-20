@@ -3,7 +3,7 @@ package com.github.nyukhalov.highloadcup.web
 import java.util.concurrent.ConcurrentHashMap
 
 import com.github.nyukhalov.highloadcup.core.domain.{Location, User, Visit}
-import com.github.nyukhalov.highloadcup.core.{AppLogger, DataLoader, HLService, HLServiceImpl}
+import com.github.nyukhalov.highloadcup.core.{AppLogger, HLService}
 import com.github.nyukhalov.highloadcup.web.domain._
 import com.github.nyukhalov.highloadcup.web.json.JsonSupport
 import io.circe.parser._
@@ -104,7 +104,15 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
             val body = BytesUtil.get(buf.bytes(), req.body)
             decode[UserUpdate](body) match {
               case Left(_) => Validation
-              case Right(userUpdate) => hlService.updateUser(id, userUpdate)
+              case Right(userUpdate) => {
+                hlService.updateUser(id, userUpdate) match {
+                  case SuccessfulOperation =>
+                    cache.remove(s"/users/$id")
+                    SuccessfulOperation
+
+                  case another => another
+                }
+              }
             }
           }
 
@@ -115,7 +123,15 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
             val body = BytesUtil.get(buf.bytes(), req.body)
             decode[VisitUpdate](body) match {
               case Left(_) => Validation
-              case Right(visitUpdate) => hlService.updateVisit(id, visitUpdate)
+              case Right(visitUpdate) => {
+                hlService.updateVisit(id, visitUpdate) match {
+                  case SuccessfulOperation =>
+                    cache.remove(s"/visits/$id")
+                    SuccessfulOperation
+
+                  case another => another
+                }
+              }
             }
           }
 
@@ -126,7 +142,15 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
             val body = BytesUtil.get(buf.bytes(), req.body)
             decode[LocationUpdate](body) match {
               case Left(_) => Validation
-              case Right(locUpdate) => hlService.updateLocation(id, locUpdate)
+              case Right(locUpdate) => {
+                hlService.updateLocation(id, locUpdate) match {
+                  case SuccessfulOperation =>
+                    cache.remove(s"/locations/$id")
+                    SuccessfulOperation
+
+                  case another => another
+                }
+              }
             }
           }
       }
@@ -203,19 +227,14 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
     toResponse(uri, ctx, req, resp)
   }
 
-  private def toResponse(uri: String, ctx: Channel, req: RapidoidHelper, resp: Any, flushCache: Boolean = false): HttpStatus = {
+  private def toResponse(uri: String, ctx: Channel, req: RapidoidHelper, resp: Any, cacheIt: Boolean = false): HttpStatus = {
     resp match {
       case NotExist => HttpStatus.NOT_FOUND
       case Validation => badRequest(ctx, req)
-      case SuccessfulOperation => {
-        if (!req.isGet.value && flushCache) {
-          cache.remove(uri)
-        }
-        ok(ctx, req.isKeepAlive.value, EMPTY_JSON, MediaType.APPLICATION_JSON)
-      }
+      case SuccessfulOperation => ok(ctx, req.isKeepAlive.value, EMPTY_JSON, MediaType.APPLICATION_JSON)
       case x => {
         val bytes = JSON.stringifyToBytes(x)
-        if (req.isGet.value) {
+        if (cacheIt && req.isGet.value) {
           cache += (uri -> bytes)
         }
         json(ctx, req.isKeepAlive.value, bytes)

@@ -28,11 +28,9 @@ object WebBoot extends AppLogger {
 
     hlService.userMap.foreach{ case (id, user) => {
       server.warmupCache(s"/users/$id", user)
-      server.warmupCache(s"/users/$id/visits", hlService.getUserVisits(id, None, None, None, None))
     }}
     hlService.locMap.foreach{ case (id, loc) => {
       server.warmupCache(s"/locations/$id", loc)
-      server.warmupCache(s"/locations/$id/avg", hlService.getAverageRating(id, None, None, None, None, None))
     }}
     hlService.visitMap.foreach { case (id, visit) => {
       server.warmupCache(s"/visits/$id", visit)

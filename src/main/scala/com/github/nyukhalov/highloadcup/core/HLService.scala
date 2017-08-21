@@ -3,7 +3,8 @@ package com.github.nyukhalov.highloadcup.core
 import com.github.nyukhalov.highloadcup.core.domain._
 import com.github.nyukhalov.highloadcup.web.domain._
 import org.joda.time.{DateTime, DateTimeZone}
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.{ConcurrentHashMap, Executors}
+
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 
@@ -61,6 +62,8 @@ class HLServiceImpl extends HLService with AppLogger {
   val locId2Visits: mutable.Map[Int, mutable.Set[Visit]] = new ConcurrentHashMap[Int, mutable.Set[Visit]]() asScala
   val userId2Visits: mutable.Map[Int, mutable.SortedSet[Visit]] = new ConcurrentHashMap[Int, mutable.SortedSet[Visit]]() asScala
 
+  private val updatesExecutor = Executors.newFixedThreadPool(Runtime.getRuntime.availableProcessors())
+
   val now = DateTime.now(DateTimeZone.UTC).withTimeAtStartOfDay()
 
   implicit val visitOrdering: Ordering[Visit] = (x: Visit, y: Visit) => {
@@ -93,9 +96,11 @@ class HLServiceImpl extends HLService with AppLogger {
       Validation
     }
     else {
-      visitMap += (visit.id -> visit)
-      locId2Visits(visit.location).add(visit)
-      userId2Visits(visit.user).add(visit)
+      updatesExecutor.submit(() => {
+        visitMap += (visit.id -> visit)
+        locId2Visits(visit.location).add(visit)
+        userId2Visits(visit.user).add(visit)
+      })
       SuccessfulOperation
     }
   }
@@ -130,23 +135,25 @@ class HLServiceImpl extends HLService with AppLogger {
           else if (!isLocationExist(updatedVisit.location)) Validation
           else {
 
-            // location was updated
-            if (v.location != updatedVisit.location) {
-              locId2Visits(v.location).remove(v)
-            } else {
-              locId2Visits(updatedVisit.location).remove(v)
-            }
-            locId2Visits(updatedVisit.location).add(updatedVisit)
+            updatesExecutor.submit(() => {
+              // location was updated
+              if (v.location != updatedVisit.location) {
+                locId2Visits(v.location).remove(v)
+              } else {
+                locId2Visits(updatedVisit.location).remove(v)
+              }
+              locId2Visits(updatedVisit.location).add(updatedVisit)
 
-            // user was updated
-            if (v.user != updatedVisit.user) {
-              userId2Visits(v.user).remove(v)
-            } else {
-              userId2Visits(updatedVisit.user).remove(v)
-            }
-            userId2Visits(updatedVisit.user).add(updatedVisit)
+              // user was updated
+              if (v.user != updatedVisit.user) {
+                userId2Visits(v.user).remove(v)
+              } else {
+                userId2Visits(updatedVisit.user).remove(v)
+              }
+              userId2Visits(updatedVisit.user).add(updatedVisit)
 
-            visitMap += (id -> updatedVisit)
+              visitMap += (id -> updatedVisit)
+            })
 
             SuccessfulOperation
           }
@@ -167,8 +174,10 @@ class HLServiceImpl extends HLService with AppLogger {
     if (!LocationV.isValid(location) || isLocationExist(location.id)) {
       Validation
     } else {
-      locMap += (location.id -> location)
-      locId2Visits += (location.id -> createConcurrentSet())
+      updatesExecutor.submit(() => {
+        locMap += (location.id -> location)
+        locId2Visits += (location.id -> createConcurrentSet())
+      })
       SuccessfulOperation
     }
   }
@@ -225,15 +234,16 @@ class HLServiceImpl extends HLService with AppLogger {
         case None => NotExist
 
         case Some(l) =>
-          val updatedLocation = Location(
-            id,
-            locationUpdate.place.getOrElse(l.place),
-            locationUpdate.country.getOrElse(l.country),
-            locationUpdate.city.getOrElse(l.city),
-            locationUpdate.distance.getOrElse(l.distance)
-          )
-
-          locMap += (updatedLocation.id -> updatedLocation)
+          updatesExecutor.submit(() => {
+            val updatedLocation = Location(
+              id,
+              locationUpdate.place.getOrElse(l.place),
+              locationUpdate.country.getOrElse(l.country),
+              locationUpdate.city.getOrElse(l.city),
+              locationUpdate.distance.getOrElse(l.distance)
+            )
+            locMap += (updatedLocation.id -> updatedLocation)
+          })
 
           SuccessfulOperation
       }
@@ -272,8 +282,10 @@ class HLServiceImpl extends HLService with AppLogger {
     if (!UserV.isValid(user) || isUserExist(user.id)) {
       Validation
     } else {
-      userMap += (user.id -> user)
-      userId2Visits += (user.id -> createTreeSet())
+      updatesExecutor.submit( () => {
+        userMap += (user.id -> user)
+        userId2Visits += (user.id -> createTreeSet())
+      })
       SuccessfulOperation
     }
   }
@@ -307,17 +319,18 @@ class HLServiceImpl extends HLService with AppLogger {
         case None => NotExist
 
         case Some(u) =>
-          val updatedUser = User(
-            id,
-            userUpdate.email.getOrElse(u.email),
-            userUpdate.firstName.getOrElse(u.firstName),
-            userUpdate.lastName.getOrElse(u.lastName),
-            userUpdate.gender.getOrElse(u.gender),
-            userUpdate.birthDate.getOrElse(u.birthDate)
-          )
+          updatesExecutor.submit(() => {
+            val updatedUser = User(
+              id,
+              userUpdate.email.getOrElse(u.email),
+              userUpdate.firstName.getOrElse(u.firstName),
+              userUpdate.lastName.getOrElse(u.lastName),
+              userUpdate.gender.getOrElse(u.gender),
+              userUpdate.birthDate.getOrElse(u.birthDate)
+            )
 
-          userMap += (updatedUser.id -> updatedUser)
-
+            userMap += (updatedUser.id -> updatedUser)
+          })
           SuccessfulOperation
       }
     }

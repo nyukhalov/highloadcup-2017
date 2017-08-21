@@ -1,6 +1,6 @@
 package com.github.nyukhalov.highloadcup.web
 
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.{ConcurrentHashMap, Executors}
 import java.util.concurrent.atomic.AtomicBoolean
 
 import com.github.nyukhalov.highloadcup.core.domain.{Location, User, Visit}
@@ -18,7 +18,6 @@ import org.rapidoid.net.impl.RapidoidHelper
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
-import scala.util.Try
 
 class RapidoidHttpServer(serverPort: Int, hlService: HLService)
   extends AbstractHttpServer with JsonSupport with HttpServer with AppLogger {

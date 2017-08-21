@@ -96,7 +96,7 @@ class HLServiceImpl extends HLService with AppLogger {
       Validation
     }
     else {
-      updatesExecutor.submit(() => {
+      updatesExecutor.execute(() => {
         visitMap += (visit.id -> visit)
         locId2Visits(visit.location).add(visit)
         userId2Visits(visit.user).add(visit)
@@ -135,7 +135,7 @@ class HLServiceImpl extends HLService with AppLogger {
           else if (!isLocationExist(updatedVisit.location)) Validation
           else {
 
-            updatesExecutor.submit(() => {
+            updatesExecutor.execute(() => {
               // location was updated
               if (v.location != updatedVisit.location) {
                 locId2Visits(v.location).remove(v)
@@ -174,7 +174,7 @@ class HLServiceImpl extends HLService with AppLogger {
     if (!LocationV.isValid(location) || isLocationExist(location.id)) {
       Validation
     } else {
-      updatesExecutor.submit(() => {
+      updatesExecutor.execute(() => {
         locMap += (location.id -> location)
         locId2Visits += (location.id -> createConcurrentSet())
       })
@@ -234,7 +234,7 @@ class HLServiceImpl extends HLService with AppLogger {
         case None => NotExist
 
         case Some(l) =>
-          updatesExecutor.submit(() => {
+          updatesExecutor.execute(() => {
             val updatedLocation = Location(
               id,
               locationUpdate.place.getOrElse(l.place),
@@ -282,7 +282,7 @@ class HLServiceImpl extends HLService with AppLogger {
     if (!UserV.isValid(user) || isUserExist(user.id)) {
       Validation
     } else {
-      updatesExecutor.submit( () => {
+      updatesExecutor.execute( () => {
         userMap += (user.id -> user)
         userId2Visits += (user.id -> createTreeSet())
       })
@@ -319,7 +319,7 @@ class HLServiceImpl extends HLService with AppLogger {
         case None => NotExist
 
         case Some(u) =>
-          updatesExecutor.submit(() => {
+          updatesExecutor.execute(() => {
             val updatedUser = User(
               id,
               userUpdate.email.getOrElse(u.email),

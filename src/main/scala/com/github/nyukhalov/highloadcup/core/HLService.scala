@@ -215,8 +215,8 @@ class HLServiceImpl extends HLService with AppLogger {
 
           fromDate.foreach(from => visits = visits.filter(_._1.visitedAt > from))
           toDate.foreach(to => visits = visits.filter(_._1.visitedAt < to))
-          fromBirthDate.foreach(from => visits = visits.filter(_._2.birthDate >= from))
-          toBirthDate.foreach(to => visits = visits.filter(_._2.birthDate < to))
+          fromBirthDate.foreach(from => visits = visits.filter(_._2.birth_date >= from))
+          toBirthDate.foreach(to => visits = visits.filter(_._2.birth_date < to))
           gender.foreach(g => visits = visits.filter(_._2.gender == g))
 
           val res = if (visits.isEmpty) 0f else visits.map(_._1.mark).sum / visits.size.toFloat
@@ -323,10 +323,10 @@ class HLServiceImpl extends HLService with AppLogger {
             val updatedUser = User(
               id,
               userUpdate.email.getOrElse(u.email),
-              userUpdate.firstName.getOrElse(u.firstName),
-              userUpdate.lastName.getOrElse(u.lastName),
+              userUpdate.firstName.getOrElse(u.first_name),
+              userUpdate.lastName.getOrElse(u.last_name),
               userUpdate.gender.getOrElse(u.gender),
-              userUpdate.birthDate.getOrElse(u.birthDate)
+              userUpdate.birthDate.getOrElse(u.birth_date)
             )
 
             userMap += (updatedUser.id -> updatedUser)

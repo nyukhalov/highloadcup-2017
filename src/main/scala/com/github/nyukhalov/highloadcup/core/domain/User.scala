@@ -1,21 +1,40 @@
 package com.github.nyukhalov.highloadcup.core.domain
 
-final case class User(id: Int, email: String, firstName: String, lastName: String, gender: String, birthDate: Long) {
+import org.rapidoid.data.JSON
 
-  // for serialization in rapidoid
-  def getId = id
-  def getEmail = email
-  def getFirst_name = firstName
-  def getLast_name = lastName
-  def getGender = gender
-  def getBirth_date = birthDate
+import scala.beans.BeanProperty
+
+final case class User(@BeanProperty var id: Int,
+                      @BeanProperty var email: String,
+                      @BeanProperty var first_name: String,
+                      @BeanProperty var last_name: String,
+                      @BeanProperty var gender: String,
+                      @BeanProperty var birth_date: Long) {
+
+  def this() = this(-1, "", "", "", "", -1)
+}
+
+object Test extends App {
+  val str =
+    """
+      |{
+      | "id": 1,
+      | "email": "asd",
+      | "last_name": "n2",
+      | "gender": "g",
+      | "birth_date": 123456
+      |}
+    """.stripMargin
+
+  val user = JSON.parse[User](str, classOf[User])
+  val a =0
 }
 
 object UserV {
   def isValid(user: User): Boolean = {
     isValidEmail(user.email) &&
-    isValidName(user.firstName) &&
-    isValidName(user.lastName) &&
+    isValidName(user.first_name) &&
+    isValidName(user.last_name) &&
     isValidGender(user.gender)
   }
 

@@ -10,7 +10,7 @@ trait DomainCodec {
     Decoder.forProduct6("id", "email", "first_name", "last_name", "gender", "birth_date")(User.apply)
   implicit val encodeUser: Encoder[User] =
     Encoder.forProduct6("id", "email", "first_name", "last_name", "gender", "birth_date")(u =>
-      (u.id, u.email, u.firstName, u.lastName, u.gender, u.birthDate)
+      (u.id, u.email, u.first_name, u.last_name, u.gender, u.birth_date)
     )
 
   implicit val decodeVisit: Decoder[Visit] =

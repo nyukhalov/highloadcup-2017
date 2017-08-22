@@ -3,7 +3,7 @@ package com.github.nyukhalov.highloadcup.web
 import java.util.concurrent.{ConcurrentHashMap, Executors}
 import java.util.concurrent.atomic.AtomicBoolean
 
-import com.github.nyukhalov.highloadcup.core.domain.{Location, User, Visit}
+import com.github.nyukhalov.highloadcup.core.domain.{Location, User, UserV, Visit}
 import com.github.nyukhalov.highloadcup.core.{AppLogger, HLService}
 import com.github.nyukhalov.highloadcup.web.domain._
 import com.github.nyukhalov.highloadcup.web.json.JsonSupport
@@ -81,9 +81,16 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
           if (req.isGet.value) NotExist
           else {
             val body = BytesUtil.get(buf.bytes(), req.body)
-            decode[User](body) match {
-              case Left(_) => Validation
-              case Right(user) => hlService.createUser(user)
+
+            def parseUser: Option[User] = {
+              val user = JSON.parse[User](body, classOf[User])
+              if (UserV.isValid(user)) Some(user)
+              else None
+            }
+
+            parseUser match {
+              case None => Validation
+              case Some(user) => hlService.createUser(user)
             }
           }
 

@@ -50,7 +50,6 @@ class DataLoader(hlService: HLService) extends AppLogger with DomainCodec {
             case Right(users) =>
               usersLoaded += users.users.length
               hlService.addUsers(users.users)
-              Thread.sleep(500)
           }
 
 
@@ -59,7 +58,6 @@ class DataLoader(hlService: HLService) extends AppLogger with DomainCodec {
             case Right(locations) =>
               locationsLoaded += locations.locations.length
               hlService.addLocations(locations.locations)
-              Thread.sleep(500)
           }
 
         case "visits" =>

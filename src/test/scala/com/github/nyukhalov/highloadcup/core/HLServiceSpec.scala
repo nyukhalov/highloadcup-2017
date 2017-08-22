@@ -45,8 +45,8 @@ class HLServiceSpec extends Specification {
       val userVisits = s.getUserVisits(user.id, None, None, None, None).asInstanceOf[UserVisits]
 
       userVisits mustEqual UserVisits(List(
-        UserVisit(visit1.mark, visit1.visitedAt, loc.place),
-        UserVisit(visit2.mark, visit2.visitedAt, loc.place)
+        UserVisit(visit1.mark, visit1.visited_at, loc.place),
+        UserVisit(visit2.mark, visit2.visited_at, loc.place)
       ))
     }
   }
@@ -154,7 +154,7 @@ class HLServiceSpec extends Specification {
       val user = someValidUser
       val loc = someValidLocation
       val visit = Visit(3, loc.id, user.id, VisitV.minVisitAt, 3)
-      val visit2 = visit.copy(visitedAt = VisitV.maxVisitAt)
+      val visit2 = visit.copy(visited_at = VisitV.maxVisitAt)
       s.createUser(user)
       s.createLocation(loc)
       s.createVisit(visit)

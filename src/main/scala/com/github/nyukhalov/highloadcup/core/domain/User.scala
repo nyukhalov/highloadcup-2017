@@ -11,6 +11,7 @@ final case class User(@BeanProperty var id: Int,
                       @BeanProperty var gender: String,
                       @BeanProperty var birth_date: Long) {
 
+  // initialization with invalid data
   def this() = this(-1, "", "", "", "", -1)
 }
 
@@ -32,6 +33,11 @@ object Test extends App {
 
 object UserV {
   def isValid(user: User): Boolean = {
+    user.id > 0 &&
+    user.email != null &&
+    user.first_name != null &&
+    user.last_name != null &&
+    user.gender != null &&
     isValidEmail(user.email) &&
     isValidName(user.first_name) &&
     isValidName(user.last_name) &&

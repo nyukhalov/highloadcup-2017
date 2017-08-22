@@ -1,11 +1,14 @@
 package com.github.nyukhalov.highloadcup.core.domain
 
-final case class Visit(id: Int, location: Int, user: Int, visitedAt: Long, mark: Int) {
-  def getId = id
-  def getLocation = location
-  def getUser = user
-  def getVisited_at = visitedAt
-  def getMark = mark
+import scala.beans.BeanProperty
+
+final case class Visit(@BeanProperty id: Int,
+                       @BeanProperty location: Int,
+                       @BeanProperty user: Int,
+                       @BeanProperty visited_at: Long,
+                       @BeanProperty mark: Int) {
+  // initialization with invalid data
+  def this() = this(-1, -1, -1, -1, -1)
 }
 
 object VisitV {
@@ -13,7 +16,10 @@ object VisitV {
   val maxVisitAt = 1420070400
 
   def isValid(visit: Visit): Boolean = {
-    isValidVisitedAt(visit.visitedAt) &&
+    visit.id > 0 &&
+    visit.user > 0 &&
+    visit.location > 0 &&
+    isValidVisitedAt(visit.visited_at) &&
     isValidMark(visit.mark)
   }
 

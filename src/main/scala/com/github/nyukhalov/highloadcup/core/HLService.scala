@@ -62,13 +62,11 @@ class HLServiceImpl extends HLService with AppLogger {
   val locId2Visits: mutable.Map[Int, mutable.Set[Visit]] = new ConcurrentHashMap[Int, mutable.Set[Visit]]() asScala
   val userId2Visits: mutable.Map[Int, mutable.SortedSet[Visit]] = new ConcurrentHashMap[Int, mutable.SortedSet[Visit]]() asScala
 
-  private val updatesExecutor = Executors.newFixedThreadPool(Runtime.getRuntime.availableProcessors())
-
   val now = DateTime.now(DateTimeZone.UTC).withTimeAtStartOfDay()
 
   implicit val visitOrdering: Ordering[Visit] = (x: Visit, y: Visit) => {
-    if (x.visitedAt < y.visitedAt) -1
-    else if (x.visitedAt > y.visitedAt) 1
+    if (x.visited_at < y.visited_at) -1
+    else if (x.visited_at > y.visited_at) 1
     else 0
   }
 
@@ -96,11 +94,9 @@ class HLServiceImpl extends HLService with AppLogger {
       Validation
     }
     else {
-      updatesExecutor.execute(() => {
-        visitMap += (visit.id -> visit)
-        locId2Visits(visit.location).add(visit)
-        userId2Visits(visit.user).add(visit)
-      })
+      visitMap += (visit.id -> visit)
+      locId2Visits(visit.location).add(visit)
+      userId2Visits(visit.user).add(visit)
       SuccessfulOperation
     }
   }
@@ -127,7 +123,7 @@ class HLServiceImpl extends HLService with AppLogger {
             id,
             visitUpdate.location.getOrElse(v.location),
             visitUpdate.user.getOrElse(v.user),
-            visitUpdate.visitedAt.getOrElse(v.visitedAt),
+            visitUpdate.visitedAt.getOrElse(v.visited_at),
             visitUpdate.mark.getOrElse(v.mark)
           )
 
@@ -135,25 +131,23 @@ class HLServiceImpl extends HLService with AppLogger {
           else if (!isLocationExist(updatedVisit.location)) Validation
           else {
 
-            updatesExecutor.execute(() => {
-              // location was updated
-              if (v.location != updatedVisit.location) {
-                locId2Visits(v.location).remove(v)
-              } else {
-                locId2Visits(updatedVisit.location).remove(v)
-              }
-              locId2Visits(updatedVisit.location).add(updatedVisit)
+            // location was updated
+            if (v.location != updatedVisit.location) {
+              locId2Visits(v.location).remove(v)
+            } else {
+              locId2Visits(updatedVisit.location).remove(v)
+            }
+            locId2Visits(updatedVisit.location).add(updatedVisit)
 
-              // user was updated
-              if (v.user != updatedVisit.user) {
-                userId2Visits(v.user).remove(v)
-              } else {
-                userId2Visits(updatedVisit.user).remove(v)
-              }
-              userId2Visits(updatedVisit.user).add(updatedVisit)
+            // user was updated
+            if (v.user != updatedVisit.user) {
+              userId2Visits(v.user).remove(v)
+            } else {
+              userId2Visits(updatedVisit.user).remove(v)
+            }
+            userId2Visits(updatedVisit.user).add(updatedVisit)
 
-              visitMap += (id -> updatedVisit)
-            })
+            visitMap += (id -> updatedVisit)
 
             SuccessfulOperation
           }
@@ -174,10 +168,8 @@ class HLServiceImpl extends HLService with AppLogger {
     if (!LocationV.isValid(location) || isLocationExist(location.id)) {
       Validation
     } else {
-      updatesExecutor.execute(() => {
-        locMap += (location.id -> location)
-        locId2Visits += (location.id -> createConcurrentSet())
-      })
+      locMap += (location.id -> location)
+      locId2Visits += (location.id -> createConcurrentSet())
       SuccessfulOperation
     }
   }
@@ -213,8 +205,8 @@ class HLServiceImpl extends HLService with AppLogger {
           var visits = visitSet.toList
             .map(v => (v, userMap(v.user)))
 
-          fromDate.foreach(from => visits = visits.filter(_._1.visitedAt > from))
-          toDate.foreach(to => visits = visits.filter(_._1.visitedAt < to))
+          fromDate.foreach(from => visits = visits.filter(_._1.visited_at > from))
+          toDate.foreach(to => visits = visits.filter(_._1.visited_at < to))
           fromBirthDate.foreach(from => visits = visits.filter(_._2.birth_date >= from))
           toBirthDate.foreach(to => visits = visits.filter(_._2.birth_date < to))
           gender.foreach(g => visits = visits.filter(_._2.gender == g))
@@ -234,16 +226,14 @@ class HLServiceImpl extends HLService with AppLogger {
         case None => NotExist
 
         case Some(l) =>
-          updatesExecutor.execute(() => {
-            val updatedLocation = Location(
-              id,
-              locationUpdate.place.getOrElse(l.place),
-              locationUpdate.country.getOrElse(l.country),
-              locationUpdate.city.getOrElse(l.city),
-              locationUpdate.distance.getOrElse(l.distance)
-            )
-            locMap += (updatedLocation.id -> updatedLocation)
-          })
+          val updatedLocation = Location(
+            id,
+            locationUpdate.place.getOrElse(l.place),
+            locationUpdate.country.getOrElse(l.country),
+            locationUpdate.city.getOrElse(l.city),
+            locationUpdate.distance.getOrElse(l.distance)
+          )
+          locMap += (updatedLocation.id -> updatedLocation)
 
           SuccessfulOperation
       }
@@ -282,10 +272,8 @@ class HLServiceImpl extends HLService with AppLogger {
     if (!UserV.isValid(user) || isUserExist(user.id)) {
       Validation
     } else {
-      updatesExecutor.execute( () => {
-        userMap += (user.id -> user)
-        userId2Visits += (user.id -> createTreeSet())
-      })
+      userMap += (user.id -> user)
+      userId2Visits += (user.id -> createTreeSet())
       SuccessfulOperation
     }
   }
@@ -319,18 +307,16 @@ class HLServiceImpl extends HLService with AppLogger {
         case None => NotExist
 
         case Some(u) =>
-          updatesExecutor.execute(() => {
-            val updatedUser = User(
-              id,
-              userUpdate.email.getOrElse(u.email),
-              userUpdate.firstName.getOrElse(u.first_name),
-              userUpdate.lastName.getOrElse(u.last_name),
-              userUpdate.gender.getOrElse(u.gender),
-              userUpdate.birthDate.getOrElse(u.birth_date)
-            )
+          val updatedUser = User(
+            id,
+            userUpdate.email.getOrElse(u.email),
+            userUpdate.firstName.getOrElse(u.first_name),
+            userUpdate.lastName.getOrElse(u.last_name),
+            userUpdate.gender.getOrElse(u.gender),
+            userUpdate.birthDate.getOrElse(u.birth_date)
+          )
 
-            userMap += (updatedUser.id -> updatedUser)
-          })
+          userMap += (updatedUser.id -> updatedUser)
           SuccessfulOperation
       }
     }
@@ -344,13 +330,13 @@ class HLServiceImpl extends HLService with AppLogger {
       var visits = userId2Visits(id).toList
         .map(v => (v, locMap(v.location)))
 
-      fromDate.foreach(from => visits = visits.filter(_._1.visitedAt > from))
-      toDate.foreach(to => visits = visits.filter(_._1.visitedAt < to))
+      fromDate.foreach(from => visits = visits.filter(_._1.visited_at > from))
+      toDate.foreach(to => visits = visits.filter(_._1.visited_at < to))
       country.foreach(c => visits = visits.filter(_._2.country == c))
       toDistance.foreach(d => visits = visits.filter(_._2.distance < d))
 
       val res = visits
-        .map(v => UserVisit(v._1.mark, v._1.visitedAt, v._2.place))
+        .map(v => UserVisit(v._1.mark, v._1.visited_at, v._2.place))
 
       UserVisits(res)
     }

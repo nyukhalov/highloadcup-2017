@@ -3,7 +3,7 @@ package com.github.nyukhalov.highloadcup.web
 import java.util.concurrent.{ConcurrentHashMap, Executors}
 import java.util.concurrent.atomic.AtomicBoolean
 
-import com.github.nyukhalov.highloadcup.core.domain.{Location, User, UserV, Visit}
+import com.github.nyukhalov.highloadcup.core.domain._
 import com.github.nyukhalov.highloadcup.core.{AppLogger, HLService}
 import com.github.nyukhalov.highloadcup.web.domain._
 import com.github.nyukhalov.highloadcup.web.json.JsonSupport
@@ -99,9 +99,16 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
           else {
             flushCache = true
             val body = BytesUtil.get(buf.bytes(), req.body)
-            decode[Visit](body) match {
-              case Left(_) => Validation
-              case Right(visit) => hlService.createVisit(visit)
+
+            def parseVisit: Option[Visit] = {
+              val visit = JSON.parse[Visit](body, classOf[Visit])
+              if (VisitV.isValid(visit)) Some(visit)
+              else None
+            }
+
+            parseVisit match {
+              case None => Validation
+              case Some(v) => hlService.createVisit(v)
             }
           }
 
@@ -109,9 +116,16 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
           if (req.isGet.value) NotExist
           else {
             val body = BytesUtil.get(buf.bytes(), req.body)
-            decode[Location](body) match {
-              case Left(_) => Validation
-              case Right(loc) => hlService.createLocation(loc)
+
+            def parseLoc: Option[Location] = {
+              val loc = JSON.parse[Location](body, classOf[Location])
+              if (LocationV.isValid(loc)) Some(loc)
+              else None
+            }
+
+            parseLoc match {
+              case None => Validation
+              case Some(l) => hlService.createLocation(l)
             }
           }
 

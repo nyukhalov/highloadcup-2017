@@ -17,7 +17,7 @@ trait DomainCodec {
     Decoder.forProduct5("id", "location", "user", "visited_at", "mark")(Visit.apply)
   implicit val encodeVisit: Encoder[Visit] =
     Encoder.forProduct5("id", "location", "user", "visited_at", "mark")(v =>
-      (v.id, v.location, v.user, v.visitedAt, v.mark)
+      (v.id, v.location, v.user, v.visited_at, v.mark)
     )
 
   implicit val decodeLoc: Decoder[Location] =

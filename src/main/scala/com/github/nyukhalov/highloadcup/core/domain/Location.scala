@@ -1,16 +1,24 @@
 package com.github.nyukhalov.highloadcup.core.domain
 
-final case class Location(id: Int, place: String, country: String, city: String, distance: Int) {
-  def getId = id
-  def getPlace = place
-  def getCountry = country
-  def getCity = city
-  def getDistance = distance
+import scala.beans.BeanProperty
+
+final case class Location(@BeanProperty id: Int,
+                          @BeanProperty place: String,
+                          @BeanProperty country: String,
+                          @BeanProperty city: String,
+                          @BeanProperty distance: Int) {
+
+  // initialization with invalid data
+  def this() = this(-1, "", "", "", -1)
 }
 
 object LocationV {
 
   def isValid(l: Location): Boolean = {
+    l.id > 0 &&
+    l.place != null &&
+    l.country != null &&
+    l.city != null &&
     isValidPlace(l.place) &&
     isValidCountry(l.country) &&
     isValidCity(l.city) &&

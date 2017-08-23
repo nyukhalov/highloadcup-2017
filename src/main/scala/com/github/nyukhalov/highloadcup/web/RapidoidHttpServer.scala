@@ -18,7 +18,6 @@ import org.rapidoid.net.impl.RapidoidHelper
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
-import scala.util.Try
 
 class RapidoidHttpServer(serverPort: Int, hlService: HLService)
   extends AbstractHttpServer with JsonSupport with HttpServer with AppLogger {
@@ -286,10 +285,6 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
     }
 
     val uri = BytesUtil.get(buf.bytes(), req.uri)
-
-    if (req.isGet.value) {
-      req.isKeepAlive.value = true
-    }
 
     val res = if (req.isGet.value) {
       val resp = cache.get(uri)

@@ -3,6 +3,7 @@ package com.github.nyukhalov.highloadcup.web
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 
+import com.github.nyukhalov.highloadcup.CustomServerBuilder
 import com.github.nyukhalov.highloadcup.core.domain.{Location, User, Visit}
 import com.github.nyukhalov.highloadcup.core.{AppLogger, HLService}
 import com.github.nyukhalov.highloadcup.web.domain._
@@ -43,15 +44,18 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
 
   private def listen() = {
     val syncBufs = false // default true
-    val noDelay = false // default false
+    val noDelay = true // default false
+    val blockingAccept = false // default false
 
-    val builder = TCP
-      .server
+    val workersCount = Math.max(1, Runtime.getRuntime.availableProcessors() - 1)
+
+    val builder = new CustomServerBuilder()
+      .blockingAccept(blockingAccept)
       .protocol(this)
       .address("0.0.0.0")
       .port(serverPort)
       .syncBufs(syncBufs)
-      .workers(1)
+      .workers(workersCount)
 
     builder.noDelay(noDelay)
 

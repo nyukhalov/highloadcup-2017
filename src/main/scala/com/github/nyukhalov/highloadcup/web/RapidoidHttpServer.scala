@@ -13,6 +13,7 @@ import org.rapidoid.bytes.BytesUtil
 import org.rapidoid.data.JSON
 import org.rapidoid.http._
 import org.rapidoid.http.impl.PathPattern
+import org.rapidoid.net.TCP
 import org.rapidoid.net.abstracts.Channel
 import org.rapidoid.net.impl.RapidoidHelper
 
@@ -20,7 +21,7 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable
 
 class RapidoidHttpServer(serverPort: Int, hlService: HLService)
-  extends AbstractHttpServer with JsonSupport with HttpServer with AppLogger {
+  extends AbstractHttpServer("hlcup-server", "nf", "err", true) with JsonSupport with HttpServer with AppLogger {
   private val HTTP_400 = fullResp(400, "nf".getBytes())
 
   private val EMPTY_JSON = "{}".getBytes()
@@ -36,7 +37,27 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
   private val heavyMethodCachingEnabled = new AtomicBoolean(false)
 
   override def start(): Unit = {
-    listen(serverPort)
+//    listen(serverPort)
+    listen()
+  }
+
+  private def listen() = {
+    val syncBufs = false // default true
+    val noDelay = false // default false
+
+    val builder = TCP
+      .server
+      .protocol(this)
+      .address("0.0.0.0")
+      .port(serverPort)
+      .syncBufs(syncBufs)
+      .workers(1)
+
+    builder.noDelay(noDelay)
+
+    builder
+      .build
+      .start
   }
 
   private def isKnownEntity(entity: String) = supportedEntities.contains(entity)

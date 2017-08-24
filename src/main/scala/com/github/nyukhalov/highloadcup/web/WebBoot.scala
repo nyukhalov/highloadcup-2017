@@ -1,6 +1,5 @@
 package com.github.nyukhalov.highloadcup.web
 
-import java.util.concurrent.{Executors, TimeUnit}
 
 import better.files.File
 import com.github.nyukhalov.highloadcup.core.{AppLogger, DataLoader, HLService, HLServiceImpl}

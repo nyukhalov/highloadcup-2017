@@ -21,6 +21,8 @@ libraryDependencies ++= Seq(
   "io.circe"                %% "circe-parser"           % "0.8.0",
   "org.rapidoid" % "rapidoid-http-fast" % "5.4.2",
   "org.rapidoid" % "rapidoid-http-client" % "5.4.2",
+  "com.jsoniter" % "jsoniter" % "0.9.15",
+  "org.javassist" % "javassist" % "3.21.0-GA",
 
   "org.specs2" %% "specs2-core" % "3.9.1" % "test",
   "org.specs2" %% "specs2-mock" % "3.9.1" % "test"

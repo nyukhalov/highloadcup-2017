@@ -106,7 +106,7 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
           if (req.isGet.value) NotExist
           else {
             val body = BytesUtil.get(buf.bytes(), req.body)
-            User.fromJson(body) match {
+            User.fromJson2(body) match {
               case None => Validation
               case Some(user) => hlService.createUser(user)
             }
@@ -147,7 +147,7 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
           else {
             flushCache = true
             val body = BytesUtil.get(buf.bytes(), req.body)
-            UserUpdate.fromJson(body.replace("null", "")) match {
+            UserUpdate.fromJson2(body) match {
               case None => Validation
               case Some(userUpdate) =>
                 hlService.updateUser(id, userUpdate) match {

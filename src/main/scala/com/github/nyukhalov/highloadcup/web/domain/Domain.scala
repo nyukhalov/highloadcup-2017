@@ -1,6 +1,7 @@
 package com.github.nyukhalov.highloadcup.web.domain
 
 import com.github.nyukhalov.highloadcup.core.domain.UserUpdateJ
+import com.jsoniter.JsonIterator
 import org.rapidoid.data.JSON
 
 import scala.util.control.NonFatal
@@ -11,6 +12,16 @@ object UserUpdate {
       val uuj = JSON.parse[UserUpdateJ](json, classOf[UserUpdateJ])
       if (uuj.allFieldsNull()) None
       else Some(UserUpdate(Option(uuj.email), Option(uuj.firstName), Option(uuj.lastName), Option(uuj.gender), Option(uuj.birthDate)))
+    } catch {
+      case NonFatal(_) => None
+    }
+  }
+
+  def fromJson2(json: String): Option[UserUpdate] = {
+    try {
+      val uu = JsonIterator.deserialize[UserUpdateJ](json, classOf[UserUpdateJ])
+      if (uu.allFieldsNull()) None
+      else Some(UserUpdate(Option(uu.email), Option(uu.firstName), Option(uu.lastName), Option(uu.gender), Option(uu.birthDate)))
     } catch {
       case NonFatal(_) => None
     }

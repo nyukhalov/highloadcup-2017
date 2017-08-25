@@ -48,8 +48,8 @@ class DataLoader(hlService: HLService) extends AppLogger with DomainCodec {
 
       f.name.split("_")(0) match {
         case "users" =>
-          Users.fromJson(content) match {
-            case Some(users) =>
+          decode[Users](content) match {
+            case Right(users) =>
               usersLoaded += users.users.length
               hlService.addUsers(users.users)
           }

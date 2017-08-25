@@ -1,26 +1,38 @@
 package com.github.nyukhalov.highloadcup.core.domain;
 
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.jsoniter.annotation.JsonCreator;
+import com.jsoniter.annotation.JsonProperty;
 
 public class UserJ {
-    @JsonProperty("id")
     public Integer id;
 
-    @JsonProperty("email")
     public String email;
 
-    @JsonProperty("first_name")
     public String firstName;
 
-    @JsonProperty("last_name")
     public String lastName;
 
-    @JsonProperty("gender")
     public String gender;
 
-    @JsonProperty("birth_date")
     public Long birthDate;
+
+    @JsonCreator
+    public UserJ(
+            @JsonProperty(value = "id", required = true) Integer id,
+            @JsonProperty(value = "email", required = true) String email,
+            @JsonProperty(value = "first_name", required = true) String firstName,
+            @JsonProperty(value = "last_name", required = true) String lastName,
+            @JsonProperty(value = "gender", required = true) String gender,
+            @JsonProperty(value = "birth_date", required = true) Long birthDate
+    ) {
+        this.id = id;
+        this.email = email;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.gender = gender;
+        this.birthDate = birthDate;
+    }
 
     public boolean hasNullField() {
         return id == null ||

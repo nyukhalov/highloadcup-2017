@@ -1,25 +1,50 @@
 package com.github.nyukhalov.highloadcup.core.domain;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.jsoniter.annotation.JsonIgnore;
+import com.jsoniter.annotation.JsonProperty;
+import com.jsoniter.annotation.JsonWrapper;
 
-@JsonDeserialize()
+import static com.github.nyukhalov.highloadcup.core.domain.V.requireNotNull;
+
 public class UserUpdateJ {
-    @JsonProperty("email")
+
     public String email;
 
-    @JsonProperty("first_name")
     public String firstName;
 
-    @JsonProperty("last_name")
     public String lastName;
 
-    @JsonProperty("gender")
     public String gender;
 
-    @JsonProperty("birth_date")
     public Long birthDate;
 
+    public void setEmail(String email) {
+        requireNotNull(email);
+        this.email = email;
+    }
+
+    public void setFirst_name(String firstName) {
+        requireNotNull(firstName);
+        this.firstName = firstName;
+    }
+
+    public void setLast_name(String lastName) {
+        requireNotNull(lastName);
+        this.lastName = lastName;
+    }
+
+    public void setGender(String gender) {
+        requireNotNull(gender);
+        this.gender = gender;
+    }
+
+    public void setBirth_date(Long birthDate) {
+        requireNotNull(birthDate);
+        this.birthDate = birthDate;
+    }
+
+
+    @JsonIgnore
     public boolean allFieldsNull() {
         return  email == null &&
                 firstName == null &&

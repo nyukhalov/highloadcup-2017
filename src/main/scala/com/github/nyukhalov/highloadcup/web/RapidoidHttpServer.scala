@@ -31,10 +31,6 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
   private val entityMethodPattern = PathPattern.from("/{entity}/{id}/{method}")
   private val entityPattern = PathPattern.from("/{entity}/{id}")
 
-  private val cache: mutable.Map[String, Array[Byte]] = new ConcurrentHashMap[String, Array[Byte]]().asScala
-
-  private val heavyMethodCachingEnabled = new AtomicBoolean(false)
-
   override def start(): Unit = {
     listen(serverPort)
   }
@@ -125,13 +121,7 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
             decode[UserUpdate](body) match {
               case Left(_) => Validation
               case Right(userUpdate) => {
-                hlService.updateUser(id, userUpdate) match {
-                  case SuccessfulOperation =>
-                    cache.remove(s"/users/$id")
-                    SuccessfulOperation
-
-                  case another => another
-                }
+                hlService.updateUser(id, userUpdate)
               }
             }
           }
@@ -144,13 +134,7 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
             decode[VisitUpdate](body) match {
               case Left(_) => Validation
               case Right(visitUpdate) => {
-                hlService.updateVisit(id, visitUpdate) match {
-                  case SuccessfulOperation =>
-                    cache.remove(s"/visits/$id")
-                    SuccessfulOperation
-
-                  case another => another
-                }
+                hlService.updateVisit(id, visitUpdate)
               }
             }
           }
@@ -163,13 +147,7 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
             decode[LocationUpdate](body) match {
               case Left(_) => Validation
               case Right(locUpdate) => {
-                hlService.updateLocation(id, locUpdate) match {
-                  case SuccessfulOperation =>
-                    cache.remove(s"/locations/$id")
-                    SuccessfulOperation
-
-                  case another => another
-                }
+                hlService.updateLocation(id, locUpdate)
               }
             }
           }
@@ -218,13 +196,7 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
               val country = params.get("country")
               val toDistance = params.get("toDistance").map(s => s.toInt)
 
-              hlService.getUserVisits(id, fromDate, toDate, country, toDistance) match {
-                case uv: UserVisits =>
-                  cacheIt = heavyMethodCachingEnabled.get()
-                  uv
-
-                case another => another
-              }
+              hlService.getUserVisits(id, fromDate, toDate, country, toDistance)
             } catch {
               case _: NumberFormatException => Validation
             }
@@ -242,13 +214,7 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
               val toAge = params.get("toAge").map(s => s.toInt)
               val gender = params.get("gender")
 
-              hlService.getAverageRating(id, fromDate, toDate, fromAge, toAge, gender) match {
-                case avg: LocAvgRating =>
-                  cacheIt = heavyMethodCachingEnabled.get()
-                  avg
-
-                case another => another
-              }
+              hlService.getAverageRating(id, fromDate, toDate, fromAge, toAge, gender)
             } catch {
               case _: NumberFormatException => Validation
             }
@@ -267,37 +233,23 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
       case SuccessfulOperation => ok(ctx, req.isKeepAlive.value, EMPTY_JSON, MediaType.APPLICATION_JSON)
       case x => {
         val bytes = JSON.stringifyToBytes(x)
-        if (cacheIt && req.isGet.value) {
-          cache += (uri -> bytes)
-        }
         json(ctx, req.isKeepAlive.value, bytes)
       }
     }
   }
 
   override def handle(ctx: Channel, buf: Buf, req: RapidoidHelper): HttpStatus = {
-//    val s = System.nanoTime()
-
-    if (!req.isGet.value && !heavyMethodCachingEnabled.get()) {
-      logger.info("Enable caching of heavy methods")
-      // предполагается что после ПОСТ фазы можно кэшировать сложные запросы
-      heavyMethodCachingEnabled.set(true)
-    }
+    //    val s = System.nanoTime()
 
     val uri = BytesUtil.get(buf.bytes(), req.uri)
 
     val res = if (req.isGet.value) {
-      val resp = cache.get(uri)
-      if (resp.isDefined) {
-        json(ctx, req.isKeepAlive.value, resp.get)
-      } else {
-        handleReq(uri, ctx, buf, req)
-      }
+      handleReq(uri, ctx, buf, req)
     } else {
       handleReq(uri, ctx, buf, req)
     }
 
-//    logger.info(s"$uri processed for ${System.nanoTime() - s}")
+    //    logger.info(s"$uri processed for ${System.nanoTime() - s}")
 
     res
   }
@@ -319,6 +271,6 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
   }
 
   def warmupCache(uri: String, responseObj: Any): Unit = {
-    cache += (uri -> JSON.stringifyToBytes(responseObj))
+//    cache += (uri -> JSON.stringifyToBytes(responseObj))
   }
 }

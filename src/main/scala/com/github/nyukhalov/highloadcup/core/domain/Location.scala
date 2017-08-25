@@ -1,5 +1,9 @@
 package com.github.nyukhalov.highloadcup.core.domain
 
+import org.rapidoid.data.JSON
+
+import scala.util.control.NonFatal
+
 final case class Location(id: Int, place: String, country: String, city: String, distance: Int) {
   def getId = id
   def getPlace = place
@@ -8,6 +12,17 @@ final case class Location(id: Int, place: String, country: String, city: String,
   def getDistance = distance
 }
 
+object Location {
+  def fromJson(json: String): Option[Location] = {
+    try {
+      val lj = JSON.parse[LocationJ](json, classOf[LocationJ])
+      if (lj.hasNullFields) None
+      else Some(Location(lj.id, lj.place, lj.country, lj.city, lj.distance))
+    } catch {
+      case NonFatal(_) => None
+    }
+  }
+}
 object LocationV {
 
   def isValid(l: Location): Boolean = {

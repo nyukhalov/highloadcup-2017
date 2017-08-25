@@ -106,9 +106,9 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
           if (req.isGet.value) NotExist
           else {
             val body = BytesUtil.get(buf.bytes(), req.body)
-            decode[User](body) match {
-              case Left(_) => Validation
-              case Right(user) => hlService.createUser(user)
+            User.fromJson(body) match {
+              case None => Validation
+              case Some(user) => hlService.createUser(user)
             }
           }
 
@@ -117,9 +117,9 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
           else {
             flushCache = true
             val body = BytesUtil.get(buf.bytes(), req.body)
-            decode[Visit](body) match {
-              case Left(_) => Validation
-              case Right(visit) => hlService.createVisit(visit)
+            Visit.fromJson(body) match {
+              case None => Validation
+              case Some(visit) => hlService.createVisit(visit)
             }
           }
 
@@ -127,9 +127,9 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
           if (req.isGet.value) NotExist
           else {
             val body = BytesUtil.get(buf.bytes(), req.body)
-            decode[Location](body) match {
-              case Left(_) => Validation
-              case Right(loc) => hlService.createLocation(loc)
+            Location.fromJson(body) match {
+              case None => Validation
+              case Some(loc) => hlService.createLocation(loc)
             }
           }
 
@@ -147,9 +147,9 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
           else {
             flushCache = true
             val body = BytesUtil.get(buf.bytes(), req.body)
-            decode[UserUpdate](body) match {
-              case Left(_) => Validation
-              case Right(userUpdate) => {
+            UserUpdate.fromJson(body.replace("null", "")) match {
+              case None => Validation
+              case Some(userUpdate) =>
                 hlService.updateUser(id, userUpdate) match {
                   case SuccessfulOperation =>
                     cache.remove(s"/users/$id")
@@ -157,7 +157,6 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
 
                   case another => another
                 }
-              }
             }
           }
 

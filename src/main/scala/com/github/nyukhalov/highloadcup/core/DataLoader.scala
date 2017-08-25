@@ -11,7 +11,9 @@ class DataLoader(hlService: HLService) extends AppLogger with DomainCodec {
 
   def loadData(pathToZip: String): Unit = {
     val workdir = unzipFiles(pathToZip)
+    val start = System.currentTimeMillis()
     loadData(workdir)
+    logger.info(s"Data loaded: ${System.currentTimeMillis() - start} ms")
     workdir.delete(true)
   }
 
@@ -46,12 +48,11 @@ class DataLoader(hlService: HLService) extends AppLogger with DomainCodec {
 
       f.name.split("_")(0) match {
         case "users" =>
-          decode[Users](content) match {
-            case Right(users) =>
+          Users.fromJson(content) match {
+            case Some(users) =>
               usersLoaded += users.users.length
               hlService.addUsers(users.users)
           }
-
 
         case "locations" =>
           decode[Locations](content) match {

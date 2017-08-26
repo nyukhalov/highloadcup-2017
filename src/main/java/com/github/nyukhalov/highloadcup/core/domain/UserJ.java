@@ -1,8 +1,11 @@
 package com.github.nyukhalov.highloadcup.core.domain;
 
 
+import com.jsoniter.JsonIterator;
 import com.jsoniter.annotation.JsonCreator;
 import com.jsoniter.annotation.JsonProperty;
+
+import java.util.List;
 
 public class UserJ {
     public Integer id;
@@ -41,5 +44,13 @@ public class UserJ {
         lastName == null ||
         gender == null ||
         birthDate == null;
+    }
+
+    public boolean isValid() {
+        return true;
+    }
+
+    public static UserJ fromJson(String json) {
+        return JsonIterator.deserialize(json, UserJ.class);
     }
 }

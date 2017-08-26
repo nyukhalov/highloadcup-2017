@@ -1,6 +1,7 @@
 package com.github.nyukhalov.highloadcup.core.domain;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.jsoniter.JsonIterator;
 
 public class LocationJ {
     @JsonProperty("id")
@@ -20,5 +21,13 @@ public class LocationJ {
 
     public boolean hasNullFields() {
         return id == null || place == null || country == null || city == null || distance == null;
+    }
+
+    public boolean isValid() {
+        return true;
+    }
+
+    public static LocationJ fromJson(String json) {
+        return JsonIterator.deserialize(json, LocationJ.class);
     }
 }

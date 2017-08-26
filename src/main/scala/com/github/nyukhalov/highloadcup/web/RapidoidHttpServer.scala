@@ -4,24 +4,22 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 
 import com.github.nyukhalov.highloadcup.CustomServerBuilder
-import com.github.nyukhalov.highloadcup.core.domain.{Location, User, Visit}
-import com.github.nyukhalov.highloadcup.core.{AppLogger, HLService}
+import com.github.nyukhalov.highloadcup.core.domain._
+import com.github.nyukhalov.highloadcup.core.{AppLogger, HLServiceJ}
 import com.github.nyukhalov.highloadcup.web.domain._
 import com.github.nyukhalov.highloadcup.web.json.JsonSupport
-import io.circe.parser._
 import org.rapidoid.buffer.Buf
 import org.rapidoid.bytes.BytesUtil
 import org.rapidoid.data.JSON
 import org.rapidoid.http._
 import org.rapidoid.http.impl.PathPattern
-import org.rapidoid.net.TCP
 import org.rapidoid.net.abstracts.Channel
 import org.rapidoid.net.impl.RapidoidHelper
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 
-class RapidoidHttpServer(serverPort: Int, hlService: HLService)
+class RapidoidHttpServer(serverPort: Int, hlServiceJ: HLServiceJ)
   extends AbstractHttpServer("hlcup-server", "nf", "err", true) with JsonSupport with HttpServer with AppLogger {
   private val HTTP_400 = fullResp(400, "nf".getBytes())
 
@@ -106,10 +104,12 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
           if (req.isGet.value) NotExist
           else {
             val body = BytesUtil.get(buf.bytes(), req.body)
-            User.fromJson2(body) match {
-              case None => Validation
-              case Some(user) => hlService.createUser(user)
+            val user = UserJ.fromJson(body)
+            if (user != null  && user.isValid) {
+              if (hlServiceJ.createUser(user)) SuccessfulOperation
+              else Validation
             }
+            else Validation
           }
 
         case ("visits") =>
@@ -117,20 +117,21 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
           else {
             flushCache = true
             val body = BytesUtil.get(buf.bytes(), req.body)
-            Visit.fromJson(body) match {
-              case None => Validation
-              case Some(visit) => hlService.createVisit(visit)
-            }
+            val visit = VisitJ.fromJson(body)
+            if (visit != null && visit.isValid) hlServiceJ.createVisit(visit)
+            else Validation
           }
 
         case ("locations") =>
           if (req.isGet.value) NotExist
           else {
             val body = BytesUtil.get(buf.bytes(), req.body)
-            Location.fromJson(body) match {
-              case None => Validation
-              case Some(loc) => hlService.createLocation(loc)
+            val loc = LocationJ.fromJson(body)
+            if (loc != null && loc.isValid) {
+              if (hlServiceJ.createLocation(loc)) SuccessfulOperation
+              else Validation
             }
+            else Validation
           }
 
         case _ => NotExist
@@ -143,59 +144,69 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
       val id = idOpt.get
       entity match {
         case "users" =>
-          if (req.isGet.value) hlService.getUser(id)
+          if (req.isGet.value) {
+            val u = hlServiceJ.getUser(id)
+            if (u == null) NotExist
+            else u
+          }
           else {
             flushCache = true
             val body = BytesUtil.get(buf.bytes(), req.body)
-            UserUpdate.fromJson2(body) match {
-              case None => Validation
-              case Some(userUpdate) =>
-                hlService.updateUser(id, userUpdate) match {
-                  case SuccessfulOperation =>
-                    cache.remove(s"/users/$id")
-                    SuccessfulOperation
+            val uuj = UserUpdateJ.fromJson(body)
+            if (uuj != null && uuj.isValid) {
+              hlServiceJ.updateUser(id, uuj) match {
+                case SuccessfulOperation =>
+                  cache.remove(s"/users/$id")
+                  SuccessfulOperation
 
-                  case another => another
-                }
+                case another => another
+              }
             }
+            else Validation
           }
 
         case "visits" =>
-          if (req.isGet.value) hlService.getVisit(id)
+          if (req.isGet.value) {
+            val v = hlServiceJ.getVisit(id)
+            if (v == null) NotExist
+            else v
+          }
           else {
             flushCache = true
             val body = BytesUtil.get(buf.bytes(), req.body)
-            decode[VisitUpdate](body) match {
-              case Left(_) => Validation
-              case Right(visitUpdate) => {
-                hlService.updateVisit(id, visitUpdate) match {
-                  case SuccessfulOperation =>
-                    cache.remove(s"/visits/$id")
-                    SuccessfulOperation
+            val vuj = VisitUpdateJ.fromJson(body)
+            if (vuj != null && vuj.isValid) {
+              hlServiceJ.updateVisit(id, vuj) match {
+                case SuccessfulOperation =>
+                  cache.remove(s"/visits/$id")
+                  SuccessfulOperation
 
-                  case another => another
-                }
+                case another => another
               }
             }
+            else Validation
           }
 
         case "locations" =>
-          if (req.isGet.value) hlService.getLocation(id)
+          if (req.isGet.value) {
+            val loc = hlServiceJ.getLocation(id)
+            if (loc == null) NotExist
+            else loc
+          }
           else {
             flushCache = true
             val body = BytesUtil.get(buf.bytes(), req.body)
-            decode[LocationUpdate](body) match {
-              case Left(_) => Validation
-              case Right(locUpdate) => {
-                hlService.updateLocation(id, locUpdate) match {
-                  case SuccessfulOperation =>
-                    cache.remove(s"/locations/$id")
-                    SuccessfulOperation
+            val luj = LocationUpdateJ.fromJson(body)
+            if (luj != null && luj.isValid) {
+              hlServiceJ.updateLocation(id, luj) match {
+                case SuccessfulOperation =>
+                  cache.remove(s"/locations/$id")
+                  SuccessfulOperation
 
-                  case another => another
-                }
+                case another => another
               }
             }
+            else Validation
           }
       }
     }
@@ -237,12 +248,12 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
             val params = getParams(buf, req)
 
             try {
-              val fromDate = params.get("fromDate").map(s => s.toLong)
-              val toDate = params.get("toDate").map(s => s.toLong)
-              val country = params.get("country")
-              val toDistance = params.get("toDistance").map(s => s.toInt)
+              val fromDate: Option[Long] = params.get("fromDate").map(s => s.toLong)
+              val toDate: Option[Long] = params.get("toDate").map(s => s.toLong)
+              val country: Option[String] = params.get("country")
+              val toDistance: Option[Int] = params.get("toDistance").map(s => s.toInt)
 
-              hlService.getUserVisits(id, fromDate, toDate, country, toDistance) match {
+              hlServiceJ.getUserVisits(id, fromDate.orNull, toDate.orNull, country.orNull, toDistance.orNull) match {
                 case uv: UserVisits =>
                   cacheIt = heavyMethodCachingEnabled.get()
                   uv
@@ -266,7 +277,7 @@ class RapidoidHttpServer(serverPort: Int, hlService: HLService)
               val toAge = params.get("toAge").map(s => s.toInt)
               val gender = params.get("gender")
 
-              hlService.getAverageRating(id, fromDate, toDate, fromAge, toAge, gender) match {
+              hlServiceJ.getLocAvgRating(id, fromDate.orNull, toDate.orNull, fromAge.orNull, toAge.orNull, gender.orNull) match {
                 case avg: LocAvgRating =>
                   cacheIt = heavyMethodCachingEnabled.get()
                   avg

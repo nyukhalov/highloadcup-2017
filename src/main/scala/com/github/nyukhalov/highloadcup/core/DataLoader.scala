@@ -7,29 +7,15 @@ import com.github.nyukhalov.highloadcup.core.domain._
 import com.github.nyukhalov.highloadcup.core.json.DomainCodec
 import io.circe.parser.decode
 
-class DataLoader(hlService: HLService) extends AppLogger with DomainCodec {
+class DataLoader(hlServiceJ: HLServiceJ) extends AppLogger with DomainCodec {
 
-  def loadData(pathToZip: String): Unit = {
-    val workdir = unzipFiles(pathToZip)
+  def loadData(pathToData: String): Unit = {
+    val workdir = File(pathToData)
+    readData(workdir)
+  }
+
+  private def readData(workdir: File) = {
     val start = System.currentTimeMillis()
-    loadData(workdir)
-    logger.info(s"Data loaded: ${System.currentTimeMillis() - start} ms")
-    workdir.delete(true)
-  }
-
-  private def unzipFiles(pathToZip: String) = {
-    val workdir = File.newTemporaryDirectory()
-    logger.info(s"Extracting data from $pathToZip to directory $workdir")
-
-    val zipFile = File(pathToZip)
-    zipFile.unzipTo(destination = workdir)
-
-    //    zipFile.delete(true)
-    logger.info("Data extracted successfully..")
-    workdir
-  }
-
-  private def loadData(workdir: File) = {
     logger.info("Loading data..")
 
     val entity2loadPriority = Map("users" -> 1, "locations" -> 2, "visits" -> 3)
@@ -38,40 +24,43 @@ class DataLoader(hlService: HLService) extends AppLogger with DomainCodec {
     var locationsLoaded = 0
     var visitsLoaded = 0
 
-    workdir.children.toList.map(x => {
-      val entityName = x.name.split("_")(0)
-      (x, entity2loadPriority(entityName))
-    }).sortBy(_._2).foreach { case (f, _) =>
-      logger.debug(s"Read file: $f")
+    workdir.children
+      .filter(f => {
+        f.name.startsWith("users") ||
+        f.name.startsWith("locations") ||
+        f.name.startsWith("visits")
+      })
+      .map(f => {
+        val entityName = f.name.split("_")(0)
+        (f, entity2loadPriority(entityName), entityName)
+      })
+      .toList
+      .sortBy(_._2)
+      .foreach { case (f, _, entity) =>
+        logger.debug(s"Read file: $f")
 
-      val content = f.contentAsString(charset = Charset.forName("UTF-8"))
+//        f.byteArray
+        val content = f.contentAsString(charset = Charset.forName("UTF-8"))
 
-      f.name.split("_")(0) match {
-        case "users" =>
-          decode[Users](content) match {
-            case Right(users) =>
-              usersLoaded += users.users.length
-              hlService.addUsers(users.users)
-          }
+        entity match {
+          case "users" =>
+            val users = UsersJ.fromJson(content).users
+            usersLoaded += users.size()
+            hlServiceJ.addUsers(users)
 
-        case "locations" =>
-          decode[Locations](content) match {
-            case Right(locations) =>
-              locationsLoaded += locations.locations.length
-              hlService.addLocations(locations.locations)
-          }
+          case "locations" =>
+            val locations = LocationsJ.fromJson(content).locations
+            locationsLoaded += locations.size()
+            hlServiceJ.addLocations(locations)
 
-        case "visits" =>
-          decode[Visits](content) match {
-            case Right(visits) =>
-              visitsLoaded += visits.visits.length
-              hlService.addVisits(visits.visits)
-              visits.visits
-          }
+          case "visits" =>
+            val visits = VisitsJ.fromJson(content).visits
+            visitsLoaded += visits.size()
+            hlServiceJ.addVisits(visits)
 
-        case t => logger.error(s"Unknown type of data: $t")
+          case t => logger.error(s"Unknown type of data: $t")
+        }
       }
-    }
-    logger.info(s"Data loaded successfully: users=$usersLoaded, locations=$locationsLoaded, visits=$visitsLoaded")
+    logger.info(s"Data loaded successfully (${System.currentTimeMillis() - start} ms): users=$usersLoaded, locations=$locationsLoaded, visits=$visitsLoaded")
   }
 }

@@ -1,5 +1,6 @@
 package com.github.nyukhalov.highloadcup.core.domain;
 
+import com.jsoniter.JsonIterator;
 import com.jsoniter.annotation.JsonIgnore;
 import com.jsoniter.annotation.JsonProperty;
 import com.jsoniter.annotation.JsonWrapper;
@@ -51,5 +52,13 @@ public class UserUpdateJ {
                 lastName == null &&
                 gender == null &&
                 birthDate == null;
+    }
+
+    public boolean isValid() {
+        return true;
+    }
+
+    public static UserUpdateJ fromJson(String json) {
+        return JsonIterator.deserialize(json, UserUpdateJ.class);
     }
 }

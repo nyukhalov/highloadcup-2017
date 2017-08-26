@@ -93,9 +93,7 @@ class HLServiceImpl extends HLService with AppLogger {
       Validation
     }
     else {
-      visitMap += (visit.id -> visit)
-      locId2Visits(visit.location).add(visit)
-      userId2Visits(visit.user).add(visit)
+      addVisit(visit)
       SuccessfulOperation
     }
   }
@@ -167,8 +165,7 @@ class HLServiceImpl extends HLService with AppLogger {
     if (!LocationV.isValid(location) || isLocationExist(location.id)) {
       Validation
     } else {
-      locMap += (location.id -> location)
-      locId2Visits += (location.id -> createConcurrentSet())
+      addLocation(location)
       SuccessfulOperation
     }
   }
@@ -245,35 +242,38 @@ class HLServiceImpl extends HLService with AppLogger {
   }
 
   override def addUsers(users: List[User]): Unit = {
-    users.foreach(u => {
-      if (createUser(u) != SuccessfulOperation) {
-        throw new RuntimeException(s"Bad user $u")
-      }
-    })
+    users.foreach(user => addUser(user))
+  }
+
+  private def addUser(user: User): Unit = {
+    userMap += (user.id -> user)
+//    userId2Visits += (user.id -> createTreeSet())
   }
 
   override def addLocations(locations: List[Location]): Unit = {
-    locations.foreach(l => {
-      if (createLocation(l) != SuccessfulOperation) {
-        throw new RuntimeException(s"Bad location $l")
-      }
-    })
+    locations.foreach(l => addLocation(l))
+  }
+
+  private def addLocation(location: Location): Unit = {
+    locMap += (location.id -> location)
+//    locId2Visits += (location.id -> createConcurrentSet())
   }
 
   override def addVisits(visits: List[Visit]): Unit = {
-    visits.foreach(v => {
-      if (createVisit(v) != SuccessfulOperation) {
-        throw new RuntimeException(s"Bad visit $v")
-      }
-    })
+    visits.foreach(v => addVisit(v))
+  }
+
+  private def addVisit(visit: Visit): Unit = {
+    visitMap += (visit.id -> visit)
+//    locId2Visits(visit.location).add(visit)
+//    userId2Visits(visit.user).add(visit)
   }
 
   override def createUser(user: User): AnyRef = {
     if (!UserV.isValid(user) || isUserExist(user.id)) {
       Validation
     } else {
-      userMap += (user.id -> user)
-      userId2Visits += (user.id -> createTreeSet())
+      addUser(user)
       SuccessfulOperation
     }
   }

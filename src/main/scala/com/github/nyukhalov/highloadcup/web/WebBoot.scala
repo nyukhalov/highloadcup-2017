@@ -2,7 +2,7 @@ package com.github.nyukhalov.highloadcup.web
 
 
 import better.files.File
-import com.github.nyukhalov.highloadcup.core.{AppLogger, DataLoader, HLService, HLServiceImpl}
+import com.github.nyukhalov.highloadcup.core._
 import com.typesafe.config.ConfigFactory
 import org.rapidoid.http.{HTTP, HttpClient}
 
@@ -13,33 +13,37 @@ object WebBoot extends AppLogger {
   def run(): Unit = {
     val config = ConfigFactory.load()
 
-    val pathToZip = config.getString("datazip.path")
+    val pathToData = config.getString("data.path")
     val pathToOption = config.getString("option.path")
     val serverPort = config.getInt("server.port")
 
-    val hlService = new HLServiceImpl()
-    new DataLoader(hlService).loadData(pathToZip)
     val warmupTime = getWarmupTime(pathToOption)
 
-    val server = new RapidoidHttpServer(serverPort, hlService)
+    val hlServiceJ = new HLServiceJImpl()
+    new DataLoader(hlServiceJ).loadData(pathToData)
+    val server = new RapidoidHttpServer(serverPort, hlServiceJ)
     server.start()
 
-    warmUpCache(server, hlService)
+    warmUpCache(server, hlServiceJ)
     warmUpJVM(serverPort)
+
+    logger.info("Explicit GC call")
+    System.gc()
+    logger.info("GC finished")
   }
 
-  def warmUpCache(server: RapidoidHttpServer, hlService: HLServiceImpl) = {
+  def warmUpCache(server: RapidoidHttpServer, hlServiceJ: HLServiceJImpl): Unit = {
     val s = System.currentTimeMillis()
 
-    hlService.userMap.foreach{ case (id, user) => {
+    hlServiceJ.userMap.forEach((id, user) => {
       server.warmupCache(s"/users/$id", user)
-    }}
-    hlService.locMap.foreach{ case (id, loc) => {
+    })
+    hlServiceJ.locMap.forEach((id, loc) => {
       server.warmupCache(s"/locations/$id", loc)
-    }}
-    hlService.visitMap.foreach { case (id, visit) => {
+    })
+    hlServiceJ.visitMap.forEach((id, visit) => {
       server.warmupCache(s"/visits/$id", visit)
-    }}
+    })
     logger.info(s"Warmed up Cache for ${System.currentTimeMillis() - s} ms")
   }
 

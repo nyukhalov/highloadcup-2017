@@ -14,7 +14,7 @@ sbt docker
 
 ### Round 1
 
-Top 10
+Top 10 (33.23645)
 
 ### Round 2 (increased data/RPS)
 

@@ -1,5 +1,13 @@
+# API for the Highload CUP 2017
 
-# TODO
+Under the hood:
+- [Rapidoid](https://github.com/rapidoid/rapidoid) as a web-server
+- Scala
 
-- don't use filter in findById method
-- validate req in json parser
+## Round 1
+
+Top 10
+
+## Round 2 (increased data/RPS)
+
+Caught OOM, did not fix it
